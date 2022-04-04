@@ -123,15 +123,17 @@ def train_challenge_model(data_folder, model_folder, verbose):
     
     data_numpy = np.moveaxis(data_numpy, 1, -1)
 
+    lr_schedule = tf.keras.callbacks.LearningRateScheduler(scheduler, verbose=0)
+
     # Train the model.
     model = build_model(data_numpy.shape[1],data_numpy.shape[2],labels.shape[1])
     #model = inception_model(data_padded.shape[1],1,labels.shape[1])
-    #epochs = 50
-    #batch_size = 32
-    model.fit(x=data_numpy, y=labels, epochs=50, batch_size=32,   
+    epochs = 50
+    batch_size = 15
+    model.fit(x=data_numpy, y=labels, epochs=epochs, batch_size=batch_size,   
             verbose=1,
-            class_weight=weight_dictionary
-            )
+            class_weight=weight_dictionary,
+            callbacks=[lr_schedule])
     model.save(os.path.join(model_folder, 'model.h5'))
     # Save the model.
     #save_challenge_model(model_folder, classes, imputer, classifier)
@@ -298,7 +300,7 @@ def build_model(sig_len,n_features, nb_classes, depth=6, use_residual=True):
 
     model = keras.models.Model(inputs=input_layer, outputs=output_layer)
     #model.compile(loss=[macro_double_soft_f1], optimizer=tf.keras.optimizers.Adam(learning_rate=0.001))
-    model.compile(loss=tf.keras.losses.CategoricalCrossentropy(), optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), metrics=[tf.keras.metrics.BinaryAccuracy(
+    model.compile(loss=tf.keras.losses.CategoricalCrossentropy(), optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), metrics=[tf.keras.metrics.BinaryAccuracy(
         name='accuracy', dtype=None, threshold=0.5)])
     return model
 
@@ -313,3 +315,15 @@ def get_lead_index(patient_metadata):
                 lead_num.append(cnt)
             cnt += 1
     return np.asarray(lead_num)
+
+def scheduler(epoch, lr):
+    if epoch == 15:
+        return lr * 0.1
+    elif epoch == 25:
+        return lr * 0.1
+    elif epoch == 35:
+        return lr * 0.1
+    elif epoch == 45:
+        return lr * 0.1
+    else:
+        return lr
