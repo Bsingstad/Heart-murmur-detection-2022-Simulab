@@ -280,7 +280,7 @@ def _shortcut_layer(input_tensor, out_tensor):
     x = keras.layers.Activation('relu')(x)
     return x
 
-def build_model(sig_len,n_features, nb_classes, depth=6, use_residual=True):
+def build_model(sig_len,n_features, nb_classes, depth=10, use_residual=True):
     input_layer = keras.layers.Input(shape=(sig_len,n_features))
 
     x = input_layer
@@ -317,13 +317,13 @@ def get_lead_index(patient_metadata):
     return np.asarray(lead_num)
 
 def scheduler(epoch, lr):
-    if epoch == 15:
+    if epoch == 10:
         return lr * 0.1
-    elif epoch == 25:
+    elif epoch == 20:
         return lr * 0.1
-    elif epoch == 35:
+    elif epoch == 30:
         return lr * 0.1
-    elif epoch == 45:
+    elif epoch == 40:
         return lr * 0.1
     else:
         return lr
