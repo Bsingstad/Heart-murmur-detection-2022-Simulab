@@ -129,7 +129,7 @@ def train_challenge_model(data_folder, model_folder, verbose):
     model = build_model(data_numpy.shape[1],data_numpy.shape[2],labels.shape[1])
     #model = inception_model(data_padded.shape[1],1,labels.shape[1])
     epochs = 50
-    batch_size = 15
+    batch_size = 20
     model.fit(x=data_numpy, y=labels, epochs=epochs, batch_size=batch_size,   
             verbose=1,
             class_weight=weight_dictionary,
