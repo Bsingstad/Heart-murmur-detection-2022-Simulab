@@ -67,10 +67,10 @@ def train_challenge_model(data_folder, model_folder, verbose):
 
     data = []
     labels = list()
-    new_freq = 500
+    new_freq = 250
     #new_sig_len = 550
 
-    data = np.zeros((num_patient_files,4,32256))
+    data = np.zeros((num_patient_files,4,int(32256/2)))
 
     for i in tqdm.tqdm(range(num_patient_files)):
         # Load the current patient data and recordings.
@@ -128,7 +128,7 @@ def train_challenge_model(data_folder, model_folder, verbose):
     # Train the model.
     model = build_model(data_numpy.shape[1],data_numpy.shape[2],labels.shape[1])
     #model = inception_model(data_padded.shape[1],1,labels.shape[1])
-    epochs = 50
+    epochs = 25
     batch_size = 20
     model.fit(x=data_numpy, y=labels, epochs=epochs, batch_size=batch_size,   
             verbose=1,
@@ -150,13 +150,13 @@ def load_challenge_model(model_folder, verbose):
 # Run your trained model. This function is *required*. You should edit this function to add your code, but do *not* change the
 # arguments of this function.
 def run_challenge_model(model, data, recordings, verbose):
-    new_freq = 500
+    new_freq = 250
     classes = ['Present', 'Unknown', 'Absent']
-    label = np.zeros(len(classes),dtype=int)
+    #label = np.zeros(len(classes),dtype=int)
     # Load the data.
     indx = get_lead_index(data)
     extracted_recordings = np.asarray(recordings)[indx]
-    data_padded = np.zeros((1,4,32256))
+    data_padded = np.zeros((1,4,int(32256/2)))
     new_sig_len = model.get_config()['layers'][0]['config']['batch_input_shape'][1]
     freq = get_frequency(data)
 
@@ -169,13 +169,18 @@ def run_challenge_model(model, data, recordings, verbose):
     data_padded = np.moveaxis(data_padded,1,-1)                                                                       
     proba = model.predict(data_padded)
     probabilities = np.asarray(proba, dtype=np.float32)
+    threshold = [0.54, 0.98, 0.02]
+    label = (probabilities>threshold)*1
+    label = np.asarray(label).astype(int)
+    
+    
     # Choose label with higher probability.
-    idx = np.argmax(probabilities, axis=1)
-    label[idx] = 1
-    print(f"Predicted label = {label}")
-    print(f"Predicted class: {classes[np.argmax(label)]}")
+    #idx = np.argmax(probabilities, axis=1)
+    #label[idx] = 1
+    #print(f"Predicted label = {label}")
+    #print(f"Predicted class: {classes[np.argmax(label)]}")
 
-    return classes, label, probabilities.ravel()
+    return classes, label.ravel(), probabilities.ravel()
 
 ################################################################################
 #
@@ -319,11 +324,9 @@ def get_lead_index(patient_metadata):
 def scheduler(epoch, lr):
     if epoch == 10:
         return lr * 0.1
+    elif epoch == 15:
+        return lr * 0.1
     elif epoch == 20:
-        return lr * 0.1
-    elif epoch == 30:
-        return lr * 0.1
-    elif epoch == 40:
         return lr * 0.1
     else:
         return lr

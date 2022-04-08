@@ -5,3 +5,5 @@
 *.ipynb_checkpoints/
 *.vscode/
 *outputos/
+*new_outputs/
+*model_april/
