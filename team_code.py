@@ -15,17 +15,13 @@ from sklearn.impute import SimpleImputer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.class_weight import compute_class_weight
 import os
-#import time
 import tqdm
 import numpy as np
-#import matplotlib.pyplot as plt
 import tensorflow as tf
-#import IPython.display as display
-#import tensorflow_addons as tfa
 from scipy import signal
 from sklearn.model_selection import StratifiedKFold
 from sklearn.utils.class_weight import compute_class_weight
-from tensorflow import keras
+
 
 ################################################################################
 #
@@ -57,20 +53,29 @@ def train_challenge_model(data_folder, model_folder, verbose):
 
     # Create a folder for the model if it does not already exist.
     os.makedirs(model_folder, exist_ok=True)
+    #TODO: remove this:
+    #classes = ['Present', 'Unknown', 'Absent']
+    #num_classes = len(classes)
 
-    classes = ['Present', 'Unknown', 'Absent']
-    num_classes = len(classes)
+    murmur_classes = ['Present', 'Unknown', 'Absent']
+    num_murmur_classes = len(murmur_classes)
+    outcome_classes = ['Abnormal', 'Normal']
+    num_outcome_classes = len(outcome_classes)
 
     # Extract the features and labels.
     if verbose >= 1:
         print('Extracting features and labels from the Challenge data...')
 
     data = []
-    labels = list()
-    new_freq = 250
+    #labels = list()
+    murmurs = list()
+    outcomes = list()
+    frequency = 500
+    div = 2
+    new_freq = frequency/div
     #new_sig_len = 550
 
-    data = np.zeros((num_patient_files,4,int(32256/2)))
+    data = np.zeros((num_patient_files,4,int(32256/div)))
 
     for i in tqdm.tqdm(range(num_patient_files)):
         # Load the current patient data and recordings.
@@ -85,15 +90,33 @@ def train_challenge_model(data_folder, model_folder, verbose):
             data_temp = signal.resample(extracted_recordings[j], int((len(extracted_recordings[j])/extracted_freq[j]) * new_freq))
             data[i,j,:len(data_temp)] = data_temp
 
-        # Extract labels and use one-hot encoding.
-        current_labels = np.zeros(num_classes, dtype=int)
-        label = get_label(current_patient_data)
-        if label in classes:
-            j = classes.index(label)
-            current_labels[j] = 1
-        labels.append(current_labels)
 
-    labels = np.vstack(labels)
+        current_murmur = np.zeros(num_murmur_classes, dtype=int)
+        murmur = get_murmur(current_patient_data)
+        if murmur in murmur_classes:
+            j = murmur_classes.index(murmur)
+            current_murmur[j] = 1
+        murmurs.append(current_murmur)
+
+        current_outcome = np.zeros(num_outcome_classes, dtype=int)
+        outcome = get_outcome(current_patient_data)
+        if outcome in outcome_classes:
+            j = outcome_classes.index(outcome)
+            current_outcome[j] = 1
+        outcomes.append(current_outcome)
+
+        #TODO: remove this:
+        # Extract labels and use one-hot encoding.
+        #current_labels = np.zeros(num_classes, dtype=int)
+        #label = get_label(current_patient_data)
+        #if label in classes:
+        #    j = classes.index(label)
+        #    current_labels[j] = 1
+        #labels.append(current_labels)
+
+    #labels = np.vstack(labels)
+    murmurs = np.vstack(murmurs)
+    outcomes = np.argmax(np.vstack(outcomes),axis=1)
     data_numpy = np.asarray(data)
     print(f"Number of signals = {data_numpy.shape[0]}")
     '''
@@ -114,25 +137,30 @@ def train_challenge_model(data_folder, model_folder, verbose):
                                                                         padding='post',truncating='post', value=0.0)
     '''
     # The prevalence of the 3 different labels
+    print("Murmurs prevalence:")
+    print(f"Present = {np.where(np.argmax(murmurs,axis=1)==0)[0].shape[0]}, Unknown = {np.where(np.argmax(murmurs,axis=1)==1)[0].shape[0]}, Absent = {np.where(np.argmax(murmurs,axis=1)==2)[0].shape[0]}")
 
-    print(f"Present = {np.where(np.argmax(labels,axis=1)==0)[0].shape[0]}, Unknown = {np.where(np.argmax(labels,axis=1)==1)[0].shape[0]}, Absent = {np.where(np.argmax(labels,axis=1)==2)[0].shape[0]}")
-
-    new_weights=calculating_class_weights(labels)
-    keys = np.arange(0,labels.shape[1],1)
-    weight_dictionary = dict(zip(keys, new_weights.T[1]))
+    print("Outcomes prevalence:")
+    print(f"Abnormal = {len(np.where(outcomes==0)[0])}, Normal = {len(np.where(outcomes==1)[0])}")
+    
+    #TODO: Implement weighting
+    #new_weights=calculating_class_weights(labels)
+    #keys = np.arange(0,labels.shape[1],1)
+    #weight_dictionary = dict(zip(keys, new_weights.T[1]))
     
     data_numpy = np.moveaxis(data_numpy, 1, -1)
 
     lr_schedule = tf.keras.callbacks.LearningRateScheduler(scheduler, verbose=0)
 
     # Train the model.
-    model = build_model(data_numpy.shape[1],data_numpy.shape[2],labels.shape[1])
+    model = build_model(data_numpy.shape[1],data_numpy.shape[2])
     #model = inception_model(data_padded.shape[1],1,labels.shape[1])
+
     epochs = 25
     batch_size = 20
-    model.fit(x=data_numpy, y=labels, epochs=epochs, batch_size=batch_size,   
+    model.fit(x=data_numpy, y=[murmurs,outcomes], epochs=epochs, batch_size=batch_size,   
             verbose=1,
-            class_weight=weight_dictionary,
+            #class_weight=weight_dictionary,
             callbacks=[lr_schedule])
     model.save(os.path.join(model_folder, 'model.h5'))
     # Save the model.
@@ -145,18 +173,23 @@ def train_challenge_model(data_folder, model_folder, verbose):
 # arguments of this function.
 def load_challenge_model(model_folder, verbose):
     model = tf.keras.models.load_model(os.path.join(model_folder, 'model.h5'))
+    model.compile(loss=[tf.keras.losses.CategoricalCrossentropy(),tf.keras.losses.BinaryCrossentropy()], optimizer=tf.keras.optimizers.Adam(learning_rate=0.001))
     return model
 
 # Run your trained model. This function is *required*. You should edit this function to add your code, but do *not* change the
 # arguments of this function.
 def run_challenge_model(model, data, recordings, verbose):
-    new_freq = 250
-    classes = ['Present', 'Unknown', 'Absent']
+    frequency = 500
+    div = 2
+    new_freq = frequency/div
+    #classes = ['Present', 'Unknown', 'Absent']
+    murmur_classes = ['Present', 'Unknown', 'Absent']
+    outcome_classes = ['Abnormal', 'Normal']
     #label = np.zeros(len(classes),dtype=int)
     # Load the data.
     indx = get_lead_index(data)
     extracted_recordings = np.asarray(recordings)[indx]
-    data_padded = np.zeros((1,4,int(32256/2)))
+    data_padded = np.zeros((1,4,int(32256/div)))
     new_sig_len = model.get_config()['layers'][0]['config']['batch_input_shape'][1]
     freq = get_frequency(data)
 
@@ -166,13 +199,30 @@ def run_challenge_model(model, data, recordings, verbose):
         data_padded[0,i,:]  = tf.keras.preprocessing.sequence.pad_sequences(np.expand_dims(resamp_sig,0),
                                     maxlen=int(new_sig_len),padding='post',truncating='post', value=0.0)
     
+
     data_padded = np.moveaxis(data_padded,1,-1)                                                                       
-    proba = model.predict(data_padded)
-    probabilities = np.asarray(proba, dtype=np.float32)
-    threshold = [0.54, 0.98, 0.02]
-    label = (probabilities>threshold)*1
-    label = np.asarray(label).astype(int)
+    murmur_probabilities, outcome_probabilities = model.predict(data_padded)
     
+    
+    murmur_labels = np.zeros(len(murmur_classes), dtype=np.int_)
+    idx = np.argmax(murmur_probabilities)
+    murmur_labels[idx] = 1
+    outcome_labels = np.zeros(len(outcome_classes), dtype=np.int_)
+    idx = (outcome_probabilities<0.5)*1
+    outcome_labels[idx] = 1
+
+    outcome_probabilities = np.array([outcome_probabilities[0],1-outcome_probabilities[0]])
+    #print("labels:")
+    #print(murmur_labels.shape)
+    #print(outcome_labels.shape)
+
+
+    classes = murmur_classes + outcome_classes
+    labels = np.concatenate((murmur_labels, outcome_labels))
+    #print("outcome_probabilities:")
+    #print(murmur_probabilities.ravel().shape)
+    #print(outcome_probabilities.ravel().shape)
+    probabilities = np.concatenate((murmur_probabilities.ravel(), outcome_probabilities.ravel()))
     
     # Choose label with higher probability.
     #idx = np.argmax(probabilities, axis=1)
@@ -180,7 +230,7 @@ def run_challenge_model(model, data, recordings, verbose):
     #print(f"Predicted label = {label}")
     #print(f"Predicted class: {classes[np.argmax(label)]}")
 
-    return classes, label.ravel(), probabilities.ravel()
+    return classes, labels, probabilities
 
 ################################################################################
 #
@@ -249,7 +299,7 @@ def get_features(data, recordings):
 def _inception_module(input_tensor, stride=1, activation='linear', use_bottleneck=True, kernel_size=40, bottleneck_size=32, nb_filters=32):
 
     if use_bottleneck and int(input_tensor.shape[-1]) > 1:
-        input_inception = keras.layers.Conv1D(filters=bottleneck_size, kernel_size=1,
+        input_inception = tf.keras.layers.Conv1D(filters=bottleneck_size, kernel_size=1,
                                               padding='same', activation=activation, use_bias=False)(input_tensor)
     else:
         input_inception = input_tensor
@@ -260,33 +310,33 @@ def _inception_module(input_tensor, stride=1, activation='linear', use_bottlenec
     conv_list = []
 
     for i in range(len(kernel_size_s)):
-        conv_list.append(keras.layers.Conv1D(filters=nb_filters, kernel_size=kernel_size_s[i],
+        conv_list.append(tf.keras.layers.Conv1D(filters=nb_filters, kernel_size=kernel_size_s[i],
                                               strides=stride, padding='same', activation=activation, use_bias=False)(
             input_inception))
 
-    max_pool_1 = keras.layers.MaxPool1D(pool_size=3, strides=stride, padding='same')(input_tensor)
+    max_pool_1 = tf.keras.layers.MaxPool1D(pool_size=3, strides=stride, padding='same')(input_tensor)
 
-    conv_6 = keras.layers.Conv1D(filters=nb_filters, kernel_size=1,
+    conv_6 = tf.keras.layers.Conv1D(filters=nb_filters, kernel_size=1,
                                   padding='same', activation=activation, use_bias=False)(max_pool_1)
 
     conv_list.append(conv_6)
 
-    x = keras.layers.Concatenate(axis=2)(conv_list)
-    x = keras.layers.BatchNormalization()(x)
-    x = keras.layers.Activation(activation='relu')(x)
+    x = tf.keras.layers.Concatenate(axis=2)(conv_list)
+    x = tf.keras.layers.BatchNormalization()(x)
+    x = tf.keras.layers.Activation(activation='relu')(x)
     return x
 
 def _shortcut_layer(input_tensor, out_tensor):
-    shortcut_y = keras.layers.Conv1D(filters=int(out_tensor.shape[-1]), kernel_size=1,
+    shortcut_y = tf.keras.layers.Conv1D(filters=int(out_tensor.shape[-1]), kernel_size=1,
                                       padding='same', use_bias=False)(input_tensor)
-    shortcut_y = keras.layers.BatchNormalization()(shortcut_y)
+    shortcut_y = tf.keras.layers.BatchNormalization()(shortcut_y)
 
-    x = keras.layers.Add()([shortcut_y, out_tensor])
-    x = keras.layers.Activation('relu')(x)
+    x = tf.keras.layers.Add()([shortcut_y, out_tensor])
+    x = tf.keras.layers.Activation('relu')(x)
     return x
 
-def build_model(sig_len,n_features, nb_classes, depth=10, use_residual=True):
-    input_layer = keras.layers.Input(shape=(sig_len,n_features))
+def build_model(sig_len,n_features, depth=10, use_residual=True):
+    input_layer = tf.keras.layers.Input(shape=(sig_len,n_features))
 
     x = input_layer
     input_res = input_layer
@@ -299,14 +349,13 @@ def build_model(sig_len,n_features, nb_classes, depth=10, use_residual=True):
             x = _shortcut_layer(input_res, x)
             input_res = x
 
-    gap_layer = keras.layers.GlobalAveragePooling1D()(x)
+    gap_layer = tf.keras.layers.GlobalAveragePooling1D()(x)
 
-    output_layer = keras.layers.Dense(nb_classes, activation='softmax')(gap_layer)
+    murmur_output = tf.keras.layers.Dense(3, activation='softmax', name="murmur_output")(gap_layer)
+    clinical_output = tf.keras.layers.Dense(1, activation='sigmoid', name="clinical_output")(gap_layer)
 
-    model = keras.models.Model(inputs=input_layer, outputs=output_layer)
-    #model.compile(loss=[macro_double_soft_f1], optimizer=tf.keras.optimizers.Adam(learning_rate=0.001))
-    model.compile(loss=tf.keras.losses.CategoricalCrossentropy(), optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), metrics=[tf.keras.metrics.BinaryAccuracy(
-        name='accuracy', dtype=None, threshold=0.5)])
+    model = tf.keras.models.Model(inputs=input_layer, outputs=[murmur_output,clinical_output])
+    model.compile(loss={'murmur_output': "categorical_crossentropy", 'clinical_output': "binary_crossentropy"}, optimizer=tf.keras.optimizers.Adam(learning_rate=0.001))
     return model
 
 def get_lead_index(patient_metadata):    
