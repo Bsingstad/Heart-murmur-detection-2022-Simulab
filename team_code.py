@@ -155,6 +155,7 @@ def train_challenge_model(data_folder, model_folder, verbose):
     # Train the model.
     model = build_model(data_numpy.shape[1],data_numpy.shape[2])
     #model = inception_model(data_padded.shape[1],1,labels.shape[1])
+    #TODO: Add GPU strategy
 
     epochs = 25
     batch_size = 20
