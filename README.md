@@ -1,5 +1,12 @@
 # Python example classifier code for the George B. Moody PhysioNet Challenge 2022
 
+
+# Notebook:
+https://www.kaggle.com/code/bjoernjostein/heart-sound-clf-using-incepiontime-data-v2-1-new
+
+---------------------------------
+
+
 ## What's in this repository?
 
 This repository contains a simple example to illustrate how to format a Python entry for the George B. Moody PhysioNet Challenge 2022.. You can try it by running the following commands on the Challenge training sets. These commands should take a few minutes or less to run from start to finish on a recent personal computer.
