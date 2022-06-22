@@ -5,7 +5,7 @@
 https://www.kaggle.com/code/bjoernjostein/heart-sound-clf-using-incepiontime-data-v2-1-new
 
 # Tasks
-[ ] Upload relevant papers (about Deep learning for murmur detection and also XAI if you manage to find this) to the model folder in this github-repo
+[ ] Upload relevant papers (about Deep learning for murmur detection and also XAI if you manage to find this) to the paper folder in this github-repo
 
 ---------------------------------
 
