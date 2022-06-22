@@ -4,9 +4,14 @@
 # Notebook:
 https://www.kaggle.com/code/bjoernjostein/heart-sound-clf-using-incepiontime-data-v2-1-new
 
+# Paper:
+https://www.overleaf.com/project/62ac5159618b17866a4f9b1e
+
 # Tasks
 - [ ] @Anthony, Upload relevant papers (about Deep learning for murmur detection and also XAI if you manage to find this) to the paper folder in this github-repo
 - [ ] @Bjørn-Jostein will update this repo with a Jupyter Notebook @Anthony can use to run experiments
+- [ ] @Anthony, add your full name and affilitaion to paper: https://www.overleaf.com/project/62ac5159618b17866a4f9b1e
+- [ ] @Anthony, add more text to introduction part (cite papers from previous work)
 
 ---------------------------------
 
