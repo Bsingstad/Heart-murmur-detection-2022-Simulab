@@ -9,5 +9,6 @@ new_outputs/*
 model_april/*
 testmodels/*
 new_models/*
-*.ipynb
+plot sound.ipynb
+model_saveload.ipynb
 
