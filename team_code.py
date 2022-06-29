@@ -396,11 +396,7 @@ def build_murmur_model(sig_len,n_features, depth=10, use_residual=True):
     #clinical_output = tf.keras.layers.Dense(1, activation='sigmoid', name="clinical_output")(gap_layer)
 
     model = tf.keras.models.Model(inputs=input_layer, outputs=murmur_output)
-    model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), metrics=[tf.keras.metrics.AUC(
-    num_thresholds=200,
-    num_labels = 3,
-    curve='ROC',
-    summation_method='interpolation')])
+    model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001))
     return model
 
 def build_clinical_model(sig_len,n_features, depth=10, use_residual=True):
@@ -422,10 +418,7 @@ def build_clinical_model(sig_len,n_features, depth=10, use_residual=True):
     clinical_output = tf.keras.layers.Dense(1, activation='sigmoid', name="clinical_output")(gap_layer)
 
     model = tf.keras.models.Model(inputs=input_layer, outputs=clinical_output)
-    model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001, metrics=[tf.keras.metrics.AUC(
-    num_thresholds=200,
-    curve='ROC',
-    summation_method='interpolation')]))
+    model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001))
     
     return model
 
