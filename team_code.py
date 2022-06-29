@@ -163,12 +163,12 @@ def train_challenge_model(data_folder, model_folder, verbose):
     epochs = 25
     batch_size = 20
 
-    murmur_model.fit(x=X_train, y=y1_train, epochs=epochs, batch_size=batch_size,   
+    murmur_model.fit(x=data_numpy, y=murmurs, epochs=epochs, batch_size=batch_size,   
                 verbose=1,
                 #class_weight=weight_dictionary,
                 callbacks=[lr_schedule])
 
-    clinical_model.fit(x=X_train, y=y2_train, epochs=epochs, batch_size=batch_size,   
+    clinical_model.fit(x=data_numpy, y=outcomes, epochs=epochs, batch_size=batch_size,   
                 verbose=1,
                 #class_weight=weight_dictionary,
                 callbacks=[lr_schedule])
