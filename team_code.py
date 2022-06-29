@@ -144,10 +144,14 @@ def train_challenge_model(data_folder, model_folder, verbose):
     print(f"Abnormal = {len(np.where(outcomes==0)[0])}, Normal = {len(np.where(outcomes==1)[0])}")
     
     #TODO: Implement weighting
-    #new_weights=calculating_class_weights(labels)
-    #keys = np.arange(0,labels.shape[1],1)
-    #weight_dictionary = dict(zip(keys, new_weights.T[1]))
-    
+    new_weights_murmur=calculating_class_weights(murmurs)
+    keys = np.arange(0,len(murmur_classes),1)
+    murmur_weight_dictionary = dict(zip(keys, new_weights_murmur.T[1]))
+
+    weight_outcome = np.unique(outcome, return_counts=True)[1][0]/np.unique(outcome, return_counts=True)[1][1]
+    outcome_weight_dictionary = {0: 1.0, 1:weight_outcome}
+
+
     data_numpy = np.moveaxis(data_numpy, 1, -1)
 
     lr_schedule = tf.keras.callbacks.LearningRateScheduler(scheduler, verbose=0)
@@ -165,12 +169,12 @@ def train_challenge_model(data_folder, model_folder, verbose):
 
     murmur_model.fit(x=data_numpy, y=murmurs, epochs=epochs, batch_size=batch_size,   
                 verbose=1,
-                #class_weight=weight_dictionary,
+                class_weight=murmur_weight_dictionary,
                 callbacks=[lr_schedule])
 
     clinical_model.fit(x=data_numpy, y=outcomes, epochs=epochs, batch_size=batch_size,   
                 verbose=1,
-                #class_weight=weight_dictionary,
+                class_weight=outcome_weight_dictionary,
                 callbacks=[lr_schedule])
     
     murmur_model.save(os.path.join(model_folder, 'murmur_model.h5'))
@@ -195,7 +199,6 @@ def load_challenge_model(model_folder, verbose):
 # Run your trained model. This function is *required*. You should edit this function to add your code, but do *not* change the
 # arguments of this function.
 def run_challenge_model(model, data, recordings, verbose):
-    print(recordings)
     frequency = 500
     div = 2
     new_freq = frequency/div
