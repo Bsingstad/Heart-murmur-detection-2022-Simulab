@@ -171,12 +171,12 @@ def cv_challenge_model(data_folder, result_folder, verbose):
 
         epochs = 25
         batch_size = 20
-        murmur_model.fit(x=X_train, y=y1_train, epochs=epochs, batch_size=batch_size,   
+        murmur_history = murmur_model.fit(x=X_train, y=y1_train, epochs=epochs, batch_size=batch_size,   
                 verbose=1,
                 #class_weight=weight_dictionary,
                 callbacks=[lr_schedule])
 
-        clinical_model.fit(x=X_train, y=y2_train, epochs=epochs, batch_size=batch_size,   
+        clinical_history = clinical_model.fit(x=X_train, y=y2_train, epochs=epochs, batch_size=batch_size,   
                 verbose=1,
                 #class_weight=weight_dictionary,
                 callbacks=[lr_schedule])
@@ -195,7 +195,7 @@ def cv_challenge_model(data_folder, result_folder, verbose):
         murmur_trues.append(y1_val)
         outcome_trues.append(y2_val)
 
-    return murmur_probas, outcome_probas, murmur_trues, outcome_trues
+    return murmur_probas, outcome_probas, murmur_trues, outcome_trues, murmur_history, clinical_history
 
         # Save the model.
         #save_challenge_model(model_folder, classes, imputer, classifier)
