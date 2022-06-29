@@ -150,7 +150,12 @@ def cv_challenge_model(data_folder, result_folder, verbose):
 
     lr_schedule = tf.keras.callbacks.LearningRateScheduler(scheduler, verbose=0)
     FOLDS = 10
-    skf = StratifiedKFold(n_split=FOLDS)
+    skf = StratifiedKFold(n_splits=FOLDS)
+
+    murmur_probas = []
+    outcome_probas = []
+    murmur_trues = []
+    outcome_trues = []
 
     for train_index, val_index in skf.split(data_numpy, np.argmax(murmurs,axis=1)):
         X_train, X_val = data_numpy[train_index], data_numpy[val_index]
@@ -171,9 +176,16 @@ def cv_challenge_model(data_folder, result_folder, verbose):
 
         murmur_probabilities, outcome_probabilities = model.predict(X_val)
 
-        
         print(accuracy_score(y1_val,(murmur_probabilities>0.5)*1))
         print(accuracy_score(y2_val,(outcome_probabilities>0.5)*1))
+
+        murmur_probas.append(murmur_probabilities)
+        outcome_probas.append(outcome_probabilities)
+        murmur_trues.append(y1_val)
+        outcome_trues.append(y2_val)
+
+    return murmur_probas, outcome_probas, murmur_trues, outcome_trues
+
         # Save the model.
         #save_challenge_model(model_folder, classes, imputer, classifier)
 
