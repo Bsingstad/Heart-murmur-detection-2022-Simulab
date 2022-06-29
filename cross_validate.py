@@ -10,6 +10,7 @@
 ################################################################################
 
 from curses import meta
+from termios import VLNEXT
 from helper_code import *
 import numpy as np, scipy as sp, scipy.stats, os, sys, joblib
 from sklearn.impute import SimpleImputer
@@ -166,29 +167,34 @@ def cv_challenge_model(data_folder, result_folder, verbose):
         clinical_model = build_clinical_model(data_numpy.shape[1],data_numpy.shape[2])
 
         murmur_model = build_murmur_model(data_numpy.shape[1],data_numpy.shape[2])
-        #model = inception_model(data_padded.shape[1],1,labels.shape[1])
+
         #TODO: Add GPU strategy
+
+        new_weights_murmur=calculating_class_weights(y1_val)
+        keys = np.arange(0,len(murmur_classes),1)
+        murmur_weight_dictionary = dict(zip(keys, new_weights_murmur.T[1]))
+
+        weight_outcome = np.unique(y2_val, return_counts=True)[1][0]/np.unique(y2_val, return_counts=True)[1][1]
+        outcome_weight_dictionary = {0: 1.0, 1:weight_outcome}
 
         epochs = 25
         batch_size = 20
+        print("Train murmur model..")
         murmur_history = murmur_model.fit(x=X_train, y=y1_train, epochs=epochs, batch_size=batch_size,   
-                verbose=1,
-                #class_weight=weight_dictionary,
+                verbose=1, validation_data = (X_val,y1_val),
+                class_weight=murmur_weight_dictionary,
                 callbacks=[lr_schedule])
 
-        clinical_history = clinical_model.fit(x=X_train, y=y2_train, epochs=epochs, batch_size=batch_size,   
-                verbose=1,
-                #class_weight=weight_dictionary,
+        print("Train clinical model..")
+        clinical_history = clinical_model.fit(x=X_train, y=y2_train, epochs=epochs, batch_size=batch_size,  
+                verbose=1, validation_data = (X_val,y2_val),
+                class_weight=outcome_weight_dictionary,
                 callbacks=[lr_schedule])
-        #model.save(os.path.join(model_folder, 'model.h5'))
 
         murmur_probabilities = murmur_model.predict(X_val)
 
         outcome_probabilities = clinical_model.predict(X_val)
 
-
-        print(accuracy_score(y1_val,(murmur_probabilities>0.5)*1))
-        print(accuracy_score(y2_val,(outcome_probabilities>0.5)*1))
 
         murmur_probas.append(murmur_probabilities)
         outcome_probas.append(outcome_probabilities)

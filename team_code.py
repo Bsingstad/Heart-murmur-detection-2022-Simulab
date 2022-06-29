@@ -105,45 +105,19 @@ def train_challenge_model(data_folder, model_folder, verbose):
             current_outcome[j] = 1
         outcomes.append(current_outcome)
 
-        #TODO: remove this:
-        # Extract labels and use one-hot encoding.
-        #current_labels = np.zeros(num_classes, dtype=int)
-        #label = get_label(current_patient_data)
-        #if label in classes:
-        #    j = classes.index(label)
-        #    current_labels[j] = 1
-        #labels.append(current_labels)
 
-    #labels = np.vstack(labels)
     murmurs = np.vstack(murmurs)
     outcomes = np.argmax(np.vstack(outcomes),axis=1)
     data_numpy = np.asarray(data)
     print(f"Number of signals = {data_numpy.shape[0]}")
-    '''
-    # Loop through all data and find the sound recording lengths
 
-    sig_len = []
-    for i in tqdm.tqdm(data):
-        sig_len.append(len(i))
-    sig_len = np.asarray(sig_len)    
-
-    print(f"Signal max length: {np.asarray(sig_len).max()}")
-
-    data_padded = np.zeros((data_numpy.shape[0],np.asarray(sig_len).max()))
-    #data_padded = np.zeros((data_numpy.shape[0],new_sig_len))
-    for i in tqdm.tqdm(range(data_numpy.shape[0])):
-        data_padded [i] = tf.keras.preprocessing.sequence.pad_sequences(np.expand_dims(data_numpy[i],0),
-                                                                        maxlen=sig_len.max(),
-                                                                        padding='post',truncating='post', value=0.0)
-    '''
     # The prevalence of the 3 different labels
     print("Murmurs prevalence:")
     print(f"Present = {np.where(np.argmax(murmurs,axis=1)==0)[0].shape[0]}, Unknown = {np.where(np.argmax(murmurs,axis=1)==1)[0].shape[0]}, Absent = {np.where(np.argmax(murmurs,axis=1)==2)[0].shape[0]}")
 
     print("Outcomes prevalence:")
     print(f"Abnormal = {len(np.where(outcomes==0)[0])}, Normal = {len(np.where(outcomes==1)[0])}")
-    
-    #TODO: Implement weighting
+
     new_weights_murmur=calculating_class_weights(murmurs)
     keys = np.arange(0,len(murmur_classes),1)
     murmur_weight_dictionary = dict(zip(keys, new_weights_murmur.T[1]))
