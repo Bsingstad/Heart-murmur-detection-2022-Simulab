@@ -9,7 +9,7 @@
 #
 ################################################################################
 
-from helper_code import *
+from .helper_code import *
 import numpy as np, scipy as sp, scipy.stats, os, sys, joblib
 from sklearn.impute import SimpleImputer
 from sklearn.ensemble import RandomForestClassifier
@@ -180,8 +180,7 @@ def train_challenge_model(data_folder, model_folder, verbose):
     # Save the model.
     #save_challenge_model(model_folder, classes, imputer, classifier)
 
-    if verbose >= 1:
-        print('Done.')
+
 
 # Load your trained model. This function is *required*. You should edit this function to add your code, but do *not* change the
 # arguments of this function.
@@ -189,13 +188,14 @@ def load_challenge_model(model_folder, verbose):
     model_dict = {}
     for i in os.listdir(model_folder):
         model = tf.keras.models.load_model(os.path.join(model_folder, i))
-        model_dict[i.split(".")[0]] = model
+        model_dict[i.split(".")[0]] = model    
     return model_dict
 
 
 # Run your trained model. This function is *required*. You should edit this function to add your code, but do *not* change the
 # arguments of this function.
 def run_challenge_model(model, data, recordings, verbose):
+    print(recordings)
     frequency = 500
     div = 2
     new_freq = frequency/div
@@ -206,8 +206,8 @@ def run_challenge_model(model, data, recordings, verbose):
     # Load the data.
     indx = get_lead_index(data)
     extracted_recordings = np.asarray(recordings)[indx]
-    data_padded = np.zeros((1,4,int(32256/div)))
-    new_sig_len = model.get_config()['layers'][0]['config']['batch_input_shape'][1]
+    new_sig_len = model["murmur_model"].get_config()['layers'][0]['config']['batch_input_shape'][1]
+    data_padded = np.zeros((1,4,int(new_sig_len)))
     freq = get_frequency(data)
 
     for i in range(len(extracted_recordings)):
@@ -217,11 +217,14 @@ def run_challenge_model(model, data, recordings, verbose):
                                     maxlen=int(new_sig_len),padding='post',truncating='post', value=0.0)
     
 
-    data_padded = np.moveaxis(data_padded,1,-1)                                                                       
+    data_padded = np.moveaxis(data_padded,1,-1)
+                                                                      
+
     #murmur_probabilities, outcome_probabilities = model.predict(data_padded)
     murmur_probabilities = model["murmur_model"].predict(data_padded)
+
     outcome_probabilities = model["clinical_model"].predict(data_padded)
-    
+
     murmur_labels = np.zeros(len(murmur_classes), dtype=np.int_)
     idx = np.argmax(murmur_probabilities)
     murmur_labels[idx] = 1
