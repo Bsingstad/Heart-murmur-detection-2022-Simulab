@@ -153,17 +153,30 @@ def train_challenge_model(data_folder, model_folder, verbose):
     lr_schedule = tf.keras.callbacks.LearningRateScheduler(scheduler, verbose=0)
 
     # Train the model.
-    model = build_model(data_numpy.shape[1],data_numpy.shape[2])
+    #model = build_model(data_numpy.shape[1],data_numpy.shape[2])
+    clinical_model = build_clinical_model(data_numpy.shape[1],data_numpy.shape[2])
+
+    murmur_model = build_murmur_model(data_numpy.shape[1],data_numpy.shape[2])
     #model = inception_model(data_padded.shape[1],1,labels.shape[1])
     #TODO: Add GPU strategy
 
     epochs = 25
     batch_size = 20
-    model.fit(x=data_numpy, y=[murmurs,outcomes], epochs=epochs, batch_size=batch_size,   
-            verbose=1,
-            #class_weight=weight_dictionary,
-            callbacks=[lr_schedule])
-    model.save(os.path.join(model_folder, 'model.h5'))
+
+    murmur_model.fit(x=X_train, y=y1_train, epochs=epochs, batch_size=batch_size,   
+                verbose=1,
+                #class_weight=weight_dictionary,
+                callbacks=[lr_schedule])
+
+    clinical_model.fit(x=X_train, y=y2_train, epochs=epochs, batch_size=batch_size,   
+                verbose=1,
+                #class_weight=weight_dictionary,
+                callbacks=[lr_schedule])
+    
+    murmur_model.save(os.path.join(model_folder, 'murmur_model.h5'))
+
+    clinical_model.save(os.path.join(model_folder, 'clinical_model.h5'))
+
     # Save the model.
     #save_challenge_model(model_folder, classes, imputer, classifier)
 
@@ -173,9 +186,12 @@ def train_challenge_model(data_folder, model_folder, verbose):
 # Load your trained model. This function is *required*. You should edit this function to add your code, but do *not* change the
 # arguments of this function.
 def load_challenge_model(model_folder, verbose):
-    model = tf.keras.models.load_model(os.path.join(model_folder, 'model.h5'))
-    model.compile(loss=[tf.keras.losses.CategoricalCrossentropy(),tf.keras.losses.BinaryCrossentropy()], optimizer=tf.keras.optimizers.Adam(learning_rate=0.001))
-    return model
+    model_dict = {}
+    for i in os.listdir(model_folder):
+        model = tf.keras.models.load_model(os.path.join(model_folder, i))
+        model_dict[i.split(".")[0]] = model
+    return model_dict
+
 
 # Run your trained model. This function is *required*. You should edit this function to add your code, but do *not* change the
 # arguments of this function.
@@ -202,8 +218,9 @@ def run_challenge_model(model, data, recordings, verbose):
     
 
     data_padded = np.moveaxis(data_padded,1,-1)                                                                       
-    murmur_probabilities, outcome_probabilities = model.predict(data_padded)
-    
+    #murmur_probabilities, outcome_probabilities = model.predict(data_padded)
+    murmur_probabilities = model["murmur_model"].predict(data_padded)
+    outcome_probabilities = model["clinical_model"].predict(data_padded)
     
     murmur_labels = np.zeros(len(murmur_classes), dtype=np.int_)
     idx = np.argmax(murmur_probabilities)
@@ -358,6 +375,60 @@ def build_model(sig_len,n_features, depth=10, use_residual=True):
     model = tf.keras.models.Model(inputs=input_layer, outputs=[murmur_output,clinical_output])
     model.compile(loss={'murmur_output': "categorical_crossentropy", 'clinical_output': "binary_crossentropy"}, optimizer=tf.keras.optimizers.Adam(learning_rate=0.001))
     return model
+
+def build_murmur_model(sig_len,n_features, depth=10, use_residual=True):
+    input_layer = tf.keras.layers.Input(shape=(sig_len,n_features))
+
+    x = input_layer
+    input_res = input_layer
+
+    for d in range(depth):
+
+        x = _inception_module(x)
+
+        if use_residual and d % 3 == 2:
+            x = _shortcut_layer(input_res, x)
+            input_res = x
+
+    gap_layer = tf.keras.layers.GlobalAveragePooling1D()(x)
+
+    murmur_output = tf.keras.layers.Dense(3, activation='softmax', name="murmur_output")(gap_layer)
+    #clinical_output = tf.keras.layers.Dense(1, activation='sigmoid', name="clinical_output")(gap_layer)
+
+    model = tf.keras.models.Model(inputs=input_layer, outputs=murmur_output)
+    model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), metrics=[tf.keras.metrics.AUC(
+    num_thresholds=200,
+    num_labels = 3,
+    curve='ROC',
+    summation_method='interpolation')])
+    return model
+
+def build_clinical_model(sig_len,n_features, depth=10, use_residual=True):
+    input_layer = tf.keras.layers.Input(shape=(sig_len,n_features))
+
+    x = input_layer
+    input_res = input_layer
+
+    for d in range(depth):
+
+        x = _inception_module(x)
+
+        if use_residual and d % 3 == 2:
+            x = _shortcut_layer(input_res, x)
+            input_res = x
+
+    gap_layer = tf.keras.layers.GlobalAveragePooling1D()(x)
+
+    clinical_output = tf.keras.layers.Dense(1, activation='sigmoid', name="clinical_output")(gap_layer)
+
+    model = tf.keras.models.Model(inputs=input_layer, outputs=clinical_output)
+    model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001, metrics=[tf.keras.metrics.AUC(
+    num_thresholds=200,
+    curve='ROC',
+    summation_method='interpolation')]))
+    
+    return model
+
 
 def get_lead_index(patient_metadata):    
     lead_name = []
