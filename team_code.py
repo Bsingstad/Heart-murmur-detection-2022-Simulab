@@ -35,8 +35,9 @@ def calculating_class_weights(y_true):
     number_dim = np.shape(y_true)[1]
     weights = np.empty([number_dim, 2])
     for i in range(number_dim):
-        weights[i] = compute_class_weight('balanced', [0.,1.], y_true[:, i])
+        weights[i] = compute_class_weight(class_weight='balanced', classes=[0.,1.], y=y_true[:, i])
     return weights
+    
 # Train your model.
 def train_challenge_model(data_folder, model_folder, verbose):
     # Find data files.
@@ -121,8 +122,8 @@ def train_challenge_model(data_folder, model_folder, verbose):
     new_weights_murmur=calculating_class_weights(murmurs)
     keys = np.arange(0,len(murmur_classes),1)
     murmur_weight_dictionary = dict(zip(keys, new_weights_murmur.T[1]))
-
-    weight_outcome = np.unique(outcome, return_counts=True)[1][0]/np.unique(outcome, return_counts=True)[1][1]
+  
+    weight_outcome = np.unique(outcomes, return_counts=True)[1][0]/np.unique(outcomes, return_counts=True)[1][1]
     outcome_weight_dictionary = {0: 1.0, 1:weight_outcome}
 
 
