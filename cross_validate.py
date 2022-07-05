@@ -38,8 +38,9 @@ def calculating_class_weights(y_true):
     number_dim = np.shape(y_true)[1]
     weights = np.empty([number_dim, 2])
     for i in range(number_dim):
-        weights[i] = compute_class_weight('balanced', [0.,1.], y_true[:, i])
+        weights[i] = compute_class_weight(class_weight='balanced', classes=[0.,1.], y=y_true[:, i])
     return weights
+    
 # Train your model.
 def cv_challenge_model(data_folder, result_folder, verbose):
     # Find data files.
