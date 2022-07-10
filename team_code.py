@@ -92,12 +92,12 @@ def train_challenge_model(data_folder, model_folder, verbose):
                 current_murmur[2] = 1
             murmurs.append(current_murmur)
 
-        current_outcome = np.zeros(num_outcome_classes, dtype=int)
-        outcome = get_outcome(current_patient_data)
-        if outcome in outcome_classes:
-            j = outcome_classes.index(outcome)
-            current_outcome[j] = 1
-        outcomes.append(current_outcome)
+            current_outcome = np.zeros(num_outcome_classes, dtype=int)
+            outcome = get_outcome(current_patient_data)
+            if outcome in outcome_classes:
+                j = outcome_classes.index(outcome)
+                current_outcome[j] = 1
+            outcomes.append(current_outcome)
 
     data_padded = pad_array(data)
     data_padded = np.expand_dims(data_padded,2)
