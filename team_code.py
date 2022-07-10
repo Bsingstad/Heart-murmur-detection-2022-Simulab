@@ -70,7 +70,7 @@ def train_challenge_model(data_folder, model_folder, verbose):
     data = []
     murmurs = list()
     outcomes = list()
-    NEW_FREQUENCY = 400
+    NEW_FREQUENCY = 250
 
     for i in tqdm.tqdm(range(num_patient_files)):
         # Load the current patient data and recordings.
@@ -165,7 +165,7 @@ def load_challenge_model(model_folder, verbose):
 # Run your trained model. This function is *required*. You should edit this function to add your code, but do *not* change the
 # arguments of this function.
 def run_challenge_model(model, data, recordings, verbose):
-    NEW_FREQUENCY = 400
+    NEW_FREQUENCY = 250
 
     murmur_classes = ['Present', 'Unknown', 'Absent']
     outcome_classes = ['Abnormal', 'Normal']
