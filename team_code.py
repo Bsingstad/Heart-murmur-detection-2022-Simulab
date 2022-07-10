@@ -68,36 +68,29 @@ def train_challenge_model(data_folder, model_folder, verbose):
         print('Extracting features and labels from the Challenge data...')
 
     data = []
-    #labels = list()
     murmurs = list()
     outcomes = list()
-    frequency = 500
-    div = 2
-    new_freq = frequency/div
-    #new_sig_len = 550
-
-    data = np.zeros((num_patient_files,4,int(32256/div)))
+    NEW_FREQUENCY = 100
 
     for i in tqdm.tqdm(range(num_patient_files)):
         # Load the current patient data and recordings.
         current_patient_data = load_patient_data(patient_files[i])
         current_recordings, freq = load_recordings(data_folder, current_patient_data, get_frequencies=True)
-        
-        indx = get_lead_index(current_patient_data)
-        extracted_recordings = np.asarray(current_recordings)[indx]
-        extracted_freq = np.asarray(freq)[indx]
-        for j in range(len(extracted_recordings)):
-            
-            data_temp = signal.resample(extracted_recordings[j], int((len(extracted_recordings[j])/extracted_freq[j]) * new_freq))
-            data[i,j,:len(data_temp)] = data_temp
-
-
-        current_murmur = np.zeros(num_murmur_classes, dtype=int)
-        murmur = get_murmur(current_patient_data)
-        if murmur in murmur_classes:
-            j = murmur_classes.index(murmur)
-            current_murmur[j] = 1
-        murmurs.append(current_murmur)
+        for j in range(len(current_recordings)):
+            data.append(signal.resample(current_recordings[j], int((len(current_recordings[j])/freq[j]) * NEW_FREQUENCY)))
+            current_auscultation_location = current_patient_data.split('\n')[1:len(current_recordings)+1][j].split(" ")[0]
+            all_murmur_locations = get_murmur_locations(current_patient_data).split("+")
+            current_murmur = np.zeros(num_murmur_classes, dtype=int)
+            if get_murmur(current_patient_data) == "Present":
+                if current_auscultation_location in all_murmur_locations:
+                    current_murmur[0] = 1
+                else:
+                    pass
+            elif get_murmur(current_patient_data) == "Unknown":
+                current_murmur[1] = 1
+            elif get_murmur(current_patient_data) == "Absent":
+                current_murmur[2] = 1
+            murmurs.append(current_murmur)
 
         current_outcome = np.zeros(num_outcome_classes, dtype=int)
         outcome = get_outcome(current_patient_data)
@@ -106,11 +99,12 @@ def train_challenge_model(data_folder, model_folder, verbose):
             current_outcome[j] = 1
         outcomes.append(current_outcome)
 
+    data_padded = pad_array(data)
+    data_padded = np.expand_dims(data_padded,2)
 
     murmurs = np.vstack(murmurs)
     outcomes = np.argmax(np.vstack(outcomes),axis=1)
-    data_numpy = np.asarray(data)
-    print(f"Number of signals = {data_numpy.shape[0]}")
+    print(f"Number of signals = {data_padded.shape[0]}")
 
     # The prevalence of the 3 different labels
     print("Murmurs prevalence:")
@@ -126,28 +120,25 @@ def train_challenge_model(data_folder, model_folder, verbose):
     weight_outcome = np.unique(outcomes, return_counts=True)[1][0]/np.unique(outcomes, return_counts=True)[1][1]
     outcome_weight_dictionary = {0: 1.0, 1:weight_outcome}
 
-
-    data_numpy = np.moveaxis(data_numpy, 1, -1)
-
     lr_schedule = tf.keras.callbacks.LearningRateScheduler(scheduler, verbose=0)
 
     # Train the model.
     #model = build_model(data_numpy.shape[1],data_numpy.shape[2])
-    clinical_model = build_clinical_model(data_numpy.shape[1],data_numpy.shape[2])
+    clinical_model = build_clinical_model(data_padded.shape[1],data_padded.shape[2])
 
-    murmur_model = build_murmur_model(data_numpy.shape[1],data_numpy.shape[2])
+    murmur_model = build_murmur_model(data_padded.shape[1],data_padded.shape[2])
     #model = inception_model(data_padded.shape[1],1,labels.shape[1])
     #TODO: Add GPU strategy
 
     epochs = 25
     batch_size = 20
 
-    murmur_model.fit(x=data_numpy, y=murmurs, epochs=epochs, batch_size=batch_size,   
+    murmur_model.fit(x=data_padded, y=murmurs, epochs=epochs, batch_size=batch_size,   
                 verbose=1,
                 class_weight=murmur_weight_dictionary,
                 callbacks=[lr_schedule])
 
-    clinical_model.fit(x=data_numpy, y=outcomes, epochs=epochs, batch_size=batch_size,   
+    clinical_model.fit(x=data_padded, y=outcomes, epochs=epochs, batch_size=batch_size,   
                 verbose=1,
                 class_weight=outcome_weight_dictionary,
                 callbacks=[lr_schedule])
@@ -174,61 +165,58 @@ def load_challenge_model(model_folder, verbose):
 # Run your trained model. This function is *required*. You should edit this function to add your code, but do *not* change the
 # arguments of this function.
 def run_challenge_model(model, data, recordings, verbose):
-    frequency = 500
-    div = 2
-    new_freq = frequency/div
-    #classes = ['Present', 'Unknown', 'Absent']
+    NEW_FREQUENCY = 100
+
     murmur_classes = ['Present', 'Unknown', 'Absent']
     outcome_classes = ['Abnormal', 'Normal']
-    #label = np.zeros(len(classes),dtype=int)
+
     # Load the data.
-    indx = get_lead_index(data)
-    extracted_recordings = np.asarray(recordings)[indx]
+    #indx = get_lead_index(data)
+    #extracted_recordings = np.asarray(recordings)[indx]
     new_sig_len = model["murmur_model"].get_config()['layers'][0]['config']['batch_input_shape'][1]
-    data_padded = np.zeros((1,4,int(new_sig_len)))
+    data_padded = np.zeros((len(recordings),int(new_sig_len),1))
     freq = get_frequency(data)
+    murmur_probabilities_temp = np.zeros((len(recordings),3))
+    outcome_probabilities_temp = np.zeros((len(recordings),1))
 
-    for i in range(len(extracted_recordings)):
-        rec = np.asarray(extracted_recordings[i])
-        resamp_sig = signal.resample(rec, int((len(rec)/freq) * new_freq))
-        data_padded[0,i,:]  = tf.keras.preprocessing.sequence.pad_sequences(np.expand_dims(resamp_sig,0),
-                                    maxlen=int(new_sig_len),padding='post',truncating='post', value=0.0)
-    
+    for i in range(len(recordings)):
+        data = np.zeros((1,new_sig_len,1))
+        rec = np.asarray(recordings[i])
+        resamp_sig = signal.resample(rec, int((len(rec)/freq) * NEW_FREQUENCY))
+        data[0,:len(resamp_sig),0] = resamp_sig
+        
+        murmur_probabilities_temp[i,:] = model["murmur_model"].predict(data)
+        outcome_probabilities_temp[i,:] = model["clinical_model"].predict(data)
 
-    data_padded = np.moveaxis(data_padded,1,-1)
-                                                                      
+    avg_outcome_probabilities = np.sum(outcome_probabilities_temp)/len(recordings)
+    avg_murmur_probabilities = np.sum(murmur_probabilities_temp,axis = 0)/len(recordings)
 
-    #murmur_probabilities, outcome_probabilities = model.predict(data_padded)
-    murmur_probabilities = model["murmur_model"].predict(data_padded)
-
-    outcome_probabilities = model["clinical_model"].predict(data_padded)
+    binarized_murmur_probabilities = np.argmax(murmur_probabilities_temp, axis = 1)
+    binarized_outcome_probabilities = (outcome_probabilities_temp > 0.5) * 1
 
     murmur_labels = np.zeros(len(murmur_classes), dtype=np.int_)
-    idx = np.argmax(murmur_probabilities)
-    murmur_labels[idx] = 1
-    outcome_labels = np.zeros(len(outcome_classes), dtype=np.int_)
-    idx = (outcome_probabilities<0.5)*1
-    outcome_labels[idx] = 1
+    if 0 in binarized_murmur_probabilities:
+        murmur_labels[0] = 1
+    elif 1 in binarized_murmur_probabilities:
+        murmur_labels[1] = 1
+    elif 2 in binarized_murmur_probabilities:
+        murmur_labels[1] = 1
 
-    outcome_probabilities = np.array([outcome_probabilities[0],1-outcome_probabilities[0]])
-    #print("labels:")
-    #print(murmur_labels.shape)
-    #print(outcome_labels.shape)
+    outcome_labels = np.zeros(len(outcome_classes), dtype=np.int_)
+    # 0 = abnormal outcome
+    if 0 in binarized_outcome_probabilities:
+        outcome_labels[0] = 1
+    else:
+        outcome_labels[1] = 1
+                                                        
+    outcome_probabilities = np.array([avg_outcome_probabilities[0],1-avg_outcome_probabilities[0]])
+    murmur_probabilities = avg_murmur_probabilities
 
 
     classes = murmur_classes + outcome_classes
     labels = np.concatenate((murmur_labels, outcome_labels))
-    #print("outcome_probabilities:")
-    #print(murmur_probabilities.ravel().shape)
-    #print(outcome_probabilities.ravel().shape)
     probabilities = np.concatenate((murmur_probabilities.ravel(), outcome_probabilities.ravel()))
     
-    # Choose label with higher probability.
-    #idx = np.argmax(probabilities, axis=1)
-    #label[idx] = 1
-    #print(f"Predicted label = {label}")
-    #print(f"Predicted class: {classes[np.argmax(label)]}")
-
     return classes, labels, probabilities
 
 ################################################################################
@@ -425,3 +413,25 @@ def scheduler(epoch, lr):
         return lr * 0.1
     else:
         return lr
+
+def get_murmur_locations(data):
+    murmur_location = None
+    for l in data.split('\n'):
+        if l.startswith('#Murmur locations:'):
+            try:
+                murmur_location = l.split(': ')[1]
+            except:
+                pass
+    if murmur_location is None:
+        raise ValueError('No outcome available. Is your code trying to load labels from the hidden data?')
+    return murmur_location
+
+def pad_array(data):
+    max_len = 0
+    for i in data:
+        if len(i) > max_len:
+            max_len = len(i)
+    new_arr = np.zeros((len(data),max_len))
+    for j in range(len(data)):
+        new_arr[j,:len(data[j])] = data[j]
+    return new_arr
