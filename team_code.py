@@ -366,7 +366,7 @@ def build_murmur_model(sig_len,n_features, depth=10, use_residual=True):
 
     model = tf.keras.models.Model(inputs=input_layer, outputs=murmur_output)
     model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), metrics = [tf.keras.metrics.CategoricalAccuracy(),
-    tf.keras.metrics.AUC(curve='ROC', num_labels=3,multi_label=False)])
+    tf.keras.metrics.AUC(curve='ROC')])
     return model
 
 def build_clinical_model(sig_len,n_features, depth=10, use_residual=True):
