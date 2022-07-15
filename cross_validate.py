@@ -397,7 +397,9 @@ def get_lead_index(patient_metadata):
     return np.asarray(lead_num)
 
 def scheduler(epoch, lr):
-    if epoch == 10:
+    if epoch == 5:
+        return lr * 0.1
+    elif epoch == 10:
         return lr * 0.1
     elif epoch == 15:
         return lr * 0.1
