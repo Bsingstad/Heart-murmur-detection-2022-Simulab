@@ -36,12 +36,8 @@ from sklearn.utils.class_weight import compute_class_weight
 
 
 # Train your model.
-def cv_challenge_model(data_folder, result_folder, verbose):
+def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_folds):
     NEW_FREQUENCY = 250
-    # Find data files.
-    if verbose >= 1:
-        print('Finding data files...')
-
 
     # Find the patient data files.
     patient_files = find_patient_files(data_folder)
@@ -78,8 +74,8 @@ def cv_challenge_model(data_folder, result_folder, verbose):
     cv_outcome = np.asarray(cv_outcome)
     cv_murmur = np.asarray(cv_murmur)
     patient_files = np.asarray(patient_files)
-    FOLDS = 5
-    skf = StratifiedKFold(n_splits=FOLDS)
+ 
+    skf = StratifiedKFold(n_splits=n_folds)
 
     murmur_probas = []
     outcome_probas = []
@@ -117,20 +113,20 @@ def cv_challenge_model(data_folder, result_folder, verbose):
         weight_outcome = np.unique(train_outcomes, return_counts=True)[1][0]/np.unique(train_outcomes, return_counts=True)[1][1]
         outcome_weight_dictionary = {0: 1.0, 1:weight_outcome}
 
-        epochs = 25
+
         batch_size = 20
         print("Train murmur model..")
-        temp_murmur_history = murmur_model.fit(x=train_data, y=train_murmurs, epochs=epochs, batch_size=batch_size,   
+        temp_murmur_history = murmur_model.fit(x=train_data, y=train_murmurs, epochs=n_epochs_1, batch_size=batch_size,   
                 verbose=1, validation_data = (val_data,val_murmurs),
                 class_weight=murmur_weight_dictionary, shuffle = True,
-                #callbacks=[lr_schedule]
+                callbacks=[lr_schedule]
                 )
 
         print("Train clinical model..")
-        temp_clinical_history = clinical_model.fit(x=train_data, y=train_outcomes, epochs=epochs, batch_size=batch_size,  
+        temp_clinical_history = clinical_model.fit(x=train_data, y=train_outcomes, epochs=n_epochs_2, batch_size=batch_size,  
                 verbose=1, validation_data = (val_data,val_outcomes),
                 class_weight=outcome_weight_dictionary, shuffle = True,
-                #callbacks=[lr_schedule]
+                callbacks=[lr_schedule]
                 )
 
         murmur_probabilities = murmur_model.predict(val_data)
@@ -144,7 +140,7 @@ def cv_challenge_model(data_folder, result_folder, verbose):
         murmur_trues.append(val_murmurs)
         outcome_trues.append(val_outcomes)
 
-    return murmur_probas, outcome_probas, murmur_trues, outcome_trues, murmur_history, clinical_history
+    return murmur_model, clinical_model, murmur_probas, outcome_probas, murmur_trues, outcome_trues, murmur_history, clinical_history, val_data
 
         # Save the model.
         #save_challenge_model(model_folder, classes, imputer, classifier)
@@ -399,9 +395,7 @@ def get_lead_index(patient_metadata):
     return np.asarray(lead_num)
 
 def scheduler(epoch, lr):
-    if epoch == 5:
-        return lr * 0.1
-    elif epoch == 10:
+    if epoch == 10:
         return lr * 0.1
     elif epoch == 15:
         return lr * 0.1
