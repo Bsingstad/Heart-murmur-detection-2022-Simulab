@@ -102,7 +102,7 @@ def cv_challenge_model(data_folder, result_folder, verbose):
         cv_outcome.append(get_outcome(current_patient_data))
         current_recordings, freq = load_recordings(data_folder, current_patient_data, get_frequencies=True)
         for indx, rec in enumerate(current_recordings):
-            rec_len = len(rec)//freq[indx]*NEW_FREQUENCY
+            rec_len = int(len(rec)/freq[indx]*NEW_FREQUENCY)
             if rec_len > max_len:
                 max_len = rec_len
     cv_outcome = np.asarray(cv_outcome)
@@ -126,7 +126,7 @@ def cv_challenge_model(data_folder, result_folder, verbose):
         print("Outcomes prevalence:")
         print(f"Abnormal = {len(np.where(train_outcomes==0)[0])}, Normal = {len(np.where(train_outcomes==1)[0])}")
         
-        val_data, val_murmurs, val_outcomes = get_data(patient_files[val_index], data_folder, NEW_FREQUENCY, num_murmur_classes, num_outcome_classes,outcome_classes)
+        val_data, val_murmurs, val_outcomes = get_data(patient_files[val_index], data_folder, NEW_FREQUENCY, num_murmur_classes, num_outcome_classes,outcome_classes, max_len)
         print(f"Number of signals in validation data = {val_data.shape[0]}")
         print("Murmurs prevalence:")
         print(f"Present = {np.where(np.argmax(val_murmurs,axis=1)==0)[0].shape[0]}, Unknown = {np.where(np.argmax(val_murmurs,axis=1)==1)[0].shape[0]}, Absent = {np.where(np.argmax(val_murmurs,axis=1)==2)[0].shape[0]}")
@@ -142,7 +142,7 @@ def cv_challenge_model(data_folder, result_folder, verbose):
         keys = np.arange(0,len(murmur_classes),1)
         murmur_weight_dictionary = dict(zip(keys, new_weights_murmur.T[1]))
 
-        weight_outcome = np.unique(train_outcomes, return_counts=True)[1][0]/np.unique(y2_val, return_counts=True)[1][1]
+        weight_outcome = np.unique(train_outcomes, return_counts=True)[1][0]/np.unique(train_outcomes, return_counts=True)[1][1]
         outcome_weight_dictionary = {0: 1.0, 1:weight_outcome}
 
         epochs = 25
