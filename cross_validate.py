@@ -123,13 +123,15 @@ def cv_challenge_model(data_folder, result_folder, verbose):
         temp_murmur_history = murmur_model.fit(x=train_data, y=train_murmurs, epochs=epochs, batch_size=batch_size,   
                 verbose=1, validation_data = (val_data,val_murmurs),
                 class_weight=murmur_weight_dictionary, shuffle = True,
-                callbacks=[lr_schedule])
+                #callbacks=[lr_schedule]
+                )
 
         print("Train clinical model..")
         temp_clinical_history = clinical_model.fit(x=train_data, y=train_outcomes, epochs=epochs, batch_size=batch_size,  
                 verbose=1, validation_data = (val_data,val_outcomes),
                 class_weight=outcome_weight_dictionary, shuffle = True,
-                callbacks=[lr_schedule])
+                #callbacks=[lr_schedule]
+                )
 
         murmur_probabilities = murmur_model.predict(val_data)
 
