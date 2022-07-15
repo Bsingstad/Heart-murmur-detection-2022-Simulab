@@ -101,8 +101,8 @@ def cv_challenge_model(data_folder, result_folder, verbose):
         cv_murmur.append(get_murmur(current_patient_data))
         cv_outcome.append(get_outcome(current_patient_data))
         current_recordings, freq = load_recordings(data_folder, current_patient_data, get_frequencies=True)
-        for rec in current_recordings:
-            rec_len = (len(rec)/freq) * NEW_FREQUENCY
+        for indx, rec in enumerate(current_recordings):
+            rec_len = len(rec)//freq[indx]*NEW_FREQUENCY
             if rec_len > max_len:
                 max_len = rec_len
     cv_outcome = np.asarray(cv_outcome)
