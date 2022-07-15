@@ -10,6 +10,7 @@
 ################################################################################
 
 from curses import meta
+from random import shuffle
 from termios import VLNEXT
 from helper_code import *
 import numpy as np, scipy as sp, scipy.stats, os, sys, joblib
@@ -34,37 +35,6 @@ from sklearn.utils.class_weight import compute_class_weight
 
 
 
-def calculating_class_weights(y_true):
-    number_dim = np.shape(y_true)[1]
-    weights = np.empty([number_dim, 2])
-    for i in range(number_dim):
-        weights[i] = compute_class_weight(class_weight='balanced', classes=[0.,1.], y=y_true[:, i])
-    return weights
-
-def get_murmur_locations(data):
-    murmur_location = None
-    for l in data.split('\n'):
-        if l.startswith('#Murmur locations:'):
-            try:
-                murmur_location = l.split(': ')[1]
-            except:
-                pass
-    if murmur_location is None:
-        raise ValueError('No outcome available. Is your code trying to load labels from the hidden data?')
-    return murmur_location
-
-def pad_array(data, signal_length = None):
-    max_len = 0
-    for i in data:
-        if len(i) > max_len:
-            max_len = len(i)
-    if not signal_length == None:
-        max_len = signal_length
-    new_arr = np.zeros((len(data),max_len))
-    for j in range(len(data)):
-        new_arr[j,:len(data[j])] = data[j]
-    return new_arr
-    
 # Train your model.
 def cv_challenge_model(data_folder, result_folder, verbose):
     NEW_FREQUENCY = 250
@@ -115,6 +85,8 @@ def cv_challenge_model(data_folder, result_folder, verbose):
     outcome_probas = []
     murmur_trues = []
     outcome_trues = []
+    clinical_history = []
+    murmur_history = []
 
     lr_schedule = tf.keras.callbacks.LearningRateScheduler(scheduler, verbose=0)
 
@@ -148,22 +120,23 @@ def cv_challenge_model(data_folder, result_folder, verbose):
         epochs = 25
         batch_size = 20
         print("Train murmur model..")
-        murmur_history = murmur_model.fit(x=train_data, y=train_murmurs, epochs=epochs, batch_size=batch_size,   
+        temp_murmur_history = murmur_model.fit(x=train_data, y=train_murmurs, epochs=epochs, batch_size=batch_size,   
                 verbose=1, validation_data = (val_data,val_murmurs),
-                class_weight=murmur_weight_dictionary,
+                class_weight=murmur_weight_dictionary, shuffle = True,
                 callbacks=[lr_schedule])
 
         print("Train clinical model..")
-        clinical_history = clinical_model.fit(x=train_data, y=train_outcomes, epochs=epochs, batch_size=batch_size,  
+        temp_clinical_history = clinical_model.fit(x=train_data, y=train_outcomes, epochs=epochs, batch_size=batch_size,  
                 verbose=1, validation_data = (val_data,val_outcomes),
-                class_weight=outcome_weight_dictionary,
+                class_weight=outcome_weight_dictionary, shuffle = True,
                 callbacks=[lr_schedule])
 
         murmur_probabilities = murmur_model.predict(val_data)
 
         outcome_probabilities = clinical_model.predict(val_data)
 
-
+        clinical_history.append(temp_clinical_history)
+        murmur_history.append(temp_murmur_history)
         murmur_probas.append(murmur_probabilities)
         outcome_probas.append(outcome_probabilities)
         murmur_trues.append(val_murmurs)
@@ -384,7 +357,8 @@ def build_murmur_model(sig_len,n_features, depth=10, use_residual=True):
     #clinical_output = tf.keras.layers.Dense(1, activation='sigmoid', name="clinical_output")(gap_layer)
 
     model = tf.keras.models.Model(inputs=input_layer, outputs=murmur_output)
-    model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001))
+    model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), metrics = [tf.keras.metrics.CategoricalAccuracy(),
+    tf.keras.metrics.AUC(curve='ROC')])
     return model
 
 def build_clinical_model(sig_len,n_features, depth=10, use_residual=True):
@@ -406,8 +380,8 @@ def build_clinical_model(sig_len,n_features, depth=10, use_residual=True):
     clinical_output = tf.keras.layers.Dense(1, activation='sigmoid', name="clinical_output")(gap_layer)
 
     model = tf.keras.models.Model(inputs=input_layer, outputs=clinical_output)
-    model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001))
-    
+    model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), metrics = [tf.keras.metrics.BinaryAccuracy(),
+    tf.keras.metrics.AUC(curve='ROC')])
     return model
 
 def get_lead_index(patient_metadata):    
@@ -469,3 +443,36 @@ def get_data(patient_files, data_folder, new_frequenzy, num_murmur_classes, num_
     outcomes = np.argmax(np.vstack(outcomes),axis=1)
 
     return data_padded, murmurs, outcomes
+
+
+def calculating_class_weights(y_true):
+    number_dim = np.shape(y_true)[1]
+    weights = np.empty([number_dim, 2])
+    for i in range(number_dim):
+        weights[i] = compute_class_weight(class_weight='balanced', classes=[0.,1.], y=y_true[:, i])
+    return weights
+
+def get_murmur_locations(data):
+    murmur_location = None
+    for l in data.split('\n'):
+        if l.startswith('#Murmur locations:'):
+            try:
+                murmur_location = l.split(': ')[1]
+            except:
+                pass
+    if murmur_location is None:
+        raise ValueError('No outcome available. Is your code trying to load labels from the hidden data?')
+    return murmur_location
+
+def pad_array(data, signal_length = None):
+    max_len = 0
+    for i in data:
+        if len(i) > max_len:
+            max_len = len(i)
+    if not signal_length == None:
+        max_len = signal_length
+    new_arr = np.zeros((len(data),max_len))
+    for j in range(len(data)):
+        new_arr[j,:len(data[j])] = data[j]
+    return new_arr
+    

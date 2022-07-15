@@ -71,6 +71,8 @@ def train_challenge_model(data_folder, model_folder, verbose):
     murmurs = list()
     outcomes = list()
     NEW_FREQUENCY = 250
+    # longest signal, while resampling to 500Hz = 32256 samples
+
 
     for i in tqdm.tqdm(range(num_patient_files)):
         # Load the current patient data and recordings.
