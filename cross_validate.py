@@ -101,37 +101,40 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
         print("Outcomes prevalence:")
         print(f"Abnormal = {len(np.where(val_outcomes==0)[0])}, Normal = {len(np.where(val_outcomes==1)[0])}")
         
-        # Initiate the model.
-        clinical_model = build_clinical_model(train_data.shape[1],train_data.shape[2])
-        murmur_model = build_murmur_model(train_data.shape[1],train_data.shape[2])
+        gpus = tf.config.list_logical_devices('GPU')
+        strategy = tf.distribute.MirroredStrategy(gpus)
+        with strategy.scope():
+            # Initiate the model.
+            clinical_model = build_clinical_model(train_data.shape[1],train_data.shape[2])
+            murmur_model = build_murmur_model(train_data.shape[1],train_data.shape[2])
 
-        # Calculate weights
-        new_weights_murmur=calculating_class_weights(train_murmurs)
-        keys = np.arange(0,len(murmur_classes),1)
-        murmur_weight_dictionary = dict(zip(keys, new_weights_murmur.T[1]))
+            # Calculate weights
+            new_weights_murmur=calculating_class_weights(train_murmurs)
+            keys = np.arange(0,len(murmur_classes),1)
+            murmur_weight_dictionary = dict(zip(keys, new_weights_murmur.T[1]))
 
-        weight_outcome = np.unique(train_outcomes, return_counts=True)[1][0]/np.unique(train_outcomes, return_counts=True)[1][1]
-        outcome_weight_dictionary = {0: 1.0, 1:weight_outcome}
+            weight_outcome = np.unique(train_outcomes, return_counts=True)[1][0]/np.unique(train_outcomes, return_counts=True)[1][1]
+            outcome_weight_dictionary = {0: 1.0, 1:weight_outcome}
 
 
-        batch_size = 20
-        print("Train murmur model..")
-        temp_murmur_history = murmur_model.fit(x=train_data, y=train_murmurs, epochs=n_epochs_1, batch_size=batch_size,   
-                verbose=1, validation_data = (val_data,val_murmurs),
-                class_weight=murmur_weight_dictionary, shuffle = True,
-                callbacks=[lr_schedule]
-                )
+            batch_size = 20
+            print("Train murmur model..")
+            temp_murmur_history = murmur_model.fit(x=train_data, y=train_murmurs, epochs=n_epochs_1, batch_size=batch_size,   
+                    verbose=1, validation_data = (val_data,val_murmurs),
+                    class_weight=murmur_weight_dictionary, shuffle = True,
+                    callbacks=[lr_schedule]
+                    )
 
-        print("Train clinical model..")
-        temp_clinical_history = clinical_model.fit(x=train_data, y=train_outcomes, epochs=n_epochs_2, batch_size=batch_size,  
-                verbose=1, validation_data = (val_data,val_outcomes),
-                class_weight=outcome_weight_dictionary, shuffle = True,
-                callbacks=[lr_schedule]
-                )
+            print("Train clinical model..")
+            temp_clinical_history = clinical_model.fit(x=train_data, y=train_outcomes, epochs=n_epochs_2, batch_size=batch_size,  
+                    verbose=1, validation_data = (val_data,val_outcomes),
+                    class_weight=outcome_weight_dictionary, shuffle = True,
+                    callbacks=[lr_schedule]
+                    )
 
-        murmur_probabilities = murmur_model.predict(val_data)
+            murmur_probabilities = murmur_model.predict(val_data)
 
-        outcome_probabilities = clinical_model.predict(val_data)
+            outcome_probabilities = clinical_model.predict(val_data)
 
         clinical_history.append(temp_clinical_history)
         murmur_history.append(temp_murmur_history)

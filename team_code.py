@@ -124,26 +124,25 @@ def train_challenge_model(data_folder, model_folder, verbose):
 
     lr_schedule = tf.keras.callbacks.LearningRateScheduler(scheduler, verbose=0)
 
-    # Train the model.
-    #model = build_model(data_numpy.shape[1],data_numpy.shape[2])
-    clinical_model = build_clinical_model(data_padded.shape[1],data_padded.shape[2])
+    gpus = tf.config.list_logical_devices('GPU')
+    strategy = tf.distribute.MirroredStrategy(gpus)
+    with strategy.scope():
+        clinical_model = build_clinical_model(data_padded.shape[1],data_padded.shape[2])
 
-    murmur_model = build_murmur_model(data_padded.shape[1],data_padded.shape[2])
-    #model = inception_model(data_padded.shape[1],1,labels.shape[1])
-    #TODO: Add GPU strategy
+        murmur_model = build_murmur_model(data_padded.shape[1],data_padded.shape[2])
 
-    epochs = 25
-    batch_size = 20
+        epochs = 25
+        batch_size = 20
 
-    murmur_model.fit(x=data_padded, y=murmurs, epochs=epochs, batch_size=batch_size,   
-                verbose=1, shuffle = True,
-                class_weight=murmur_weight_dictionary,
-                callbacks=[lr_schedule])
+        murmur_model.fit(x=data_padded, y=murmurs, epochs=epochs, batch_size=batch_size,   
+                    verbose=1, shuffle = True,
+                    class_weight=murmur_weight_dictionary,
+                    callbacks=[lr_schedule])
 
-    clinical_model.fit(x=data_padded, y=outcomes, epochs=epochs, batch_size=batch_size,   
-                verbose=1, shuffle = True,
-                class_weight=outcome_weight_dictionary,
-                callbacks=[lr_schedule])
+        clinical_model.fit(x=data_padded, y=outcomes, epochs=epochs, batch_size=batch_size,   
+                    verbose=1, shuffle = True,
+                    class_weight=outcome_weight_dictionary,
+                    callbacks=[lr_schedule])
     
     murmur_model.save(os.path.join(model_folder, 'murmur_model.h5'))
 
