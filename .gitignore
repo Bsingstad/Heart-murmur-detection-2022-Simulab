@@ -11,4 +11,4 @@ testmodels/*
 new_models/*
 plot sound.ipynb
 model_saveload.ipynb
-
+my_new_op/*

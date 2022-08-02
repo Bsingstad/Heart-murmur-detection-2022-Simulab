@@ -22,7 +22,6 @@ from scipy import signal
 from sklearn.model_selection import StratifiedKFold
 from sklearn.utils.class_weight import compute_class_weight
 
-
 ################################################################################
 #
 # Required functions. Edit these functions to add your code, but do not change the arguments.
@@ -195,6 +194,7 @@ def run_challenge_model(model, data, recordings, verbose):
     binarized_murmur_probabilities = np.argmax(murmur_probabilities_temp, axis = 1)
     binarized_outcome_probabilities = (outcome_probabilities_temp > 0.5) * 1
 
+    
     murmur_labels = np.zeros(len(murmur_classes), dtype=np.int_)
     if 0 in binarized_murmur_probabilities:
         murmur_labels[0] = 1
@@ -209,8 +209,9 @@ def run_challenge_model(model, data, recordings, verbose):
         outcome_labels[0] = 1
     else:
         outcome_labels[1] = 1
+
                                                         
-    outcome_probabilities = np.array([avg_outcome_probabilities[0],1-avg_outcome_probabilities[0]])
+    outcome_probabilities = np.array([avg_outcome_probabilities,1-avg_outcome_probabilities])
     murmur_probabilities = avg_murmur_probabilities
 
 
