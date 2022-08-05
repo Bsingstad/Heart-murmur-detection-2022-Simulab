@@ -201,7 +201,7 @@ def run_challenge_model(model, data, recordings, verbose):
     elif 1 in binarized_murmur_probabilities:
         murmur_labels[1] = 1
     elif 2 in binarized_murmur_probabilities:
-        murmur_labels[1] = 1
+        murmur_labels[2] = 1
 
     outcome_labels = np.zeros(len(outcome_classes), dtype=np.int_)
     # 0 = abnormal outcome
