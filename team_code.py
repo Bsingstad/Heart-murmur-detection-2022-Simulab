@@ -347,7 +347,7 @@ def build_model(sig_len,n_features, depth=6, use_residual=True):
     model.compile(loss={'murmur_output': "categorical_crossentropy", 'clinical_output': "binary_crossentropy"}, optimizer=tf.keras.optimizers.Adam(learning_rate=0.001))
     return model
 
-def build_murmur_model(sig_len,n_features, depth=6, use_residual=True):
+def build_murmur_model(sig_len,n_features, depth=10, use_residual=True):
     input_layer = tf.keras.layers.Input(shape=(sig_len,n_features))
 
     x = input_layer
