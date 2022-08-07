@@ -497,5 +497,6 @@ def pad_array(data, signal_length = None):
 
 class CustomCallback(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
-        for layer in self.model.layers[:2]:
-            layer.trainable = True
+        if epoch == 5:
+            for layer in self.model.layers[:2]:
+                layer.trainable = True
