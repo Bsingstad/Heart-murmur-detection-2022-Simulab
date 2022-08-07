@@ -118,16 +118,14 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
                 for layer in clinical_model.layers[:-2]:
                     layer.trainable = False
                 clinical_model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
-                    metrics = [tf.keras.metrics.BinaryAccuracy(),tf.keras.metrics.AUC(curve='ROC')],
-                    callbacks=[CustomCallback(clinical_model)])
+                    metrics = [tf.keras.metrics.BinaryAccuracy(),tf.keras.metrics.AUC(curve='ROC')])
 
                 murmur_layer = tf.keras.layers.Dense(3, "softmax",  name="murmur_output")(model.layers[-2].output)
                 murmur_model = tf.keras.Model(inputs=model.layers[0].output, outputs=[murmur_layer])
                 for layer in murmur_model.layers[:-2]:
                     layer.trainable = False
                 murmur_model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
-                    metrics = [tf.keras.metrics.CategoricalAccuracy(), tf.keras.metrics.AUC(curve='ROC')],
-                    callbacks=[CustomCallback(murmur_model)])
+                    metrics = [tf.keras.metrics.CategoricalAccuracy(), tf.keras.metrics.AUC(curve='ROC')])
                 
             # Calculate weights
             new_weights_murmur=calculating_class_weights(train_murmurs)
@@ -143,14 +141,14 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
             temp_murmur_history = murmur_model.fit(x=train_data, y=train_murmurs, epochs=n_epochs_1, batch_size=batch_size,   
                     verbose=1, validation_data = (val_data,val_murmurs),
                     class_weight=murmur_weight_dictionary, shuffle = True,
-                    callbacks=[lr_schedule]
+                    callbacks=[lr_schedule, CustomCallback(murmur_model)]
                     )
 
             print("Train clinical model..")
             temp_clinical_history = clinical_model.fit(x=train_data, y=train_outcomes, epochs=n_epochs_2, batch_size=batch_size,  
                     verbose=1, validation_data = (val_data,val_outcomes),
                     class_weight=outcome_weight_dictionary, shuffle = True,
-                    callbacks=[lr_schedule]
+                    callbacks=[lr_schedule, [CustomCallback(clinical_model)]]
                     )
 
             murmur_probabilities = murmur_model.predict(val_data)
