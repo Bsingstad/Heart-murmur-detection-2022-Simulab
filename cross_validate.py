@@ -36,8 +36,8 @@ from sklearn.utils.class_weight import compute_class_weight
 
 
 # Train your model.
-def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_folds):
-    NEW_FREQUENCY = 250
+def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_folds, pre_train):
+    NEW_FREQUENCY = 100
 
     # Find the patient data files.
     patient_files = find_patient_files(data_folder)
@@ -104,10 +104,24 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
         gpus = tf.config.list_logical_devices('GPU')
         strategy = tf.distribute.MirroredStrategy(gpus)
         with strategy.scope():
-            # Initiate the model.
-            clinical_model = build_clinical_model(train_data.shape[1],train_data.shape[2])
-            murmur_model = build_murmur_model(train_data.shape[1],train_data.shape[2])
+            if pre_train == False:
+                # Initiate the model.
+                clinical_model = build_clinical_model(train_data.shape[1],train_data.shape[2])
+                murmur_model = build_murmur_model(train_data.shape[1],train_data.shape[2])
+            elif pre_train == True:
+                model = base_model(train_data.shape[1],train_data.shape[2])
+                model.load_weights("./pretrained_model.h5")
+                
+                outcome_layer = tf.keras.layers.Dense(1, "sigmoid",  name="clinical_output")(model.layers[-2].output)
+                clinical_model = tf.keras.Model(inputs=model.layers[0].output, outputs=[outcome_layer])
+                clinical_model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
+                    metrics = [tf.keras.metrics.BinaryAccuracy(),tf.keras.metrics.AUC(curve='ROC')])
 
+                murmur_layer = tf.keras.layers.Dense(3, "softmax",  name="murmur_output")(model.layers[-2].output)
+                murmur_model = tf.keras.Model(inputs=model.layers[0].output, outputs=[murmur_layer])
+                murmur_model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
+                    metrics = [tf.keras.metrics.CategoricalAccuracy(), tf.keras.metrics.AUC(curve='ROC')])
+                
             # Calculate weights
             new_weights_murmur=calculating_class_weights(train_murmurs)
             keys = np.arange(0,len(murmur_classes),1)
@@ -160,7 +174,7 @@ def load_challenge_model(model_folder, verbose):
 # arguments of this function.
 def run_challenge_model(model, data, recordings, verbose):
     frequency = 500
-    div = 2
+    div = 5
     new_freq = frequency/div
     #classes = ['Present', 'Unknown', 'Absent']
     murmur_classes = ['Present', 'Unknown', 'Absent']
@@ -276,6 +290,7 @@ def get_features(data, recordings):
 
     return np.asarray(features, dtype=np.float32)
 
+
 def _inception_module(input_tensor, stride=1, activation='linear', use_bottleneck=True, kernel_size=40, bottleneck_size=32, nb_filters=32):
 
     if use_bottleneck and int(input_tensor.shape[-1]) > 1:
@@ -315,7 +330,7 @@ def _shortcut_layer(input_tensor, out_tensor):
     x = tf.keras.layers.Activation('relu')(x)
     return x
 
-def build_model(sig_len,n_features, depth=10, use_residual=True):
+def base_model(sig_len,n_features, depth=10, use_residual=True):
     input_layer = tf.keras.layers.Input(shape=(sig_len,n_features))
 
     x = input_layer
@@ -331,11 +346,9 @@ def build_model(sig_len,n_features, depth=10, use_residual=True):
 
     gap_layer = tf.keras.layers.GlobalAveragePooling1D()(x)
 
-    murmur_output = tf.keras.layers.Dense(3, activation='softmax', name="murmur_output")(gap_layer)
-    clinical_output = tf.keras.layers.Dense(1, activation='sigmoid', name="clinical_output")(gap_layer)
+    output = tf.keras.layers.Dense(1, activation='sigmoid')(gap_layer)
 
-    model = tf.keras.models.Model(inputs=input_layer, outputs=[murmur_output,clinical_output])
-    model.compile(loss={'murmur_output': "categorical_crossentropy", 'clinical_output': "binary_crossentropy"}, optimizer=tf.keras.optimizers.Adam(learning_rate=0.001))
+    model = tf.keras.models.Model(inputs=input_layer, outputs=output)
     return model
 
 def build_murmur_model(sig_len,n_features, depth=10, use_residual=True):
@@ -358,7 +371,7 @@ def build_murmur_model(sig_len,n_features, depth=10, use_residual=True):
     #clinical_output = tf.keras.layers.Dense(1, activation='sigmoid', name="clinical_output")(gap_layer)
 
     model = tf.keras.models.Model(inputs=input_layer, outputs=murmur_output)
-    model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), metrics = [tf.keras.metrics.CategoricalAccuracy(),
+    model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), metrics = [tf.keras.metrics.CategoricalAccuracy(),
     tf.keras.metrics.AUC(curve='ROC')])
     return model
 
@@ -381,8 +394,9 @@ def build_clinical_model(sig_len,n_features, depth=10, use_residual=True):
     clinical_output = tf.keras.layers.Dense(1, activation='sigmoid', name="clinical_output")(gap_layer)
 
     model = tf.keras.models.Model(inputs=input_layer, outputs=clinical_output)
-    model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), metrics = [tf.keras.metrics.BinaryAccuracy(),
+    model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), metrics = [tf.keras.metrics.BinaryAccuracy(),
     tf.keras.metrics.AUC(curve='ROC')])
+    
     return model
 
 def get_lead_index(patient_metadata):    
