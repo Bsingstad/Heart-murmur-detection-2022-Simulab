@@ -126,10 +126,19 @@ def train_challenge_model(data_folder, model_folder, verbose):
     gpus = tf.config.list_logical_devices('GPU')
     strategy = tf.distribute.MirroredStrategy(gpus)
     with strategy.scope():
-        clinical_model = build_clinical_model(data_padded.shape[1],data_padded.shape[2])
+        model = base_model(data_padded.shape[1],data_padded.shape[2])
+        model.load_weights("./pretrained_model.h5")
+        
+        outcome_layer = tf.keras.layers.Dense(1, "sigmoid",  name="clinical_output")(model.layers[-2].output)
+        clinical_model = tf.keras.Model(inputs=model.layers[0].output, outputs=[outcome_layer])
+        clinical_model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
+            metrics = [tf.keras.metrics.BinaryAccuracy(),tf.keras.metrics.AUC(curve='ROC')])
 
-        murmur_model = build_murmur_model(data_padded.shape[1],data_padded.shape[2])
-
+        murmur_layer = tf.keras.layers.Dense(3, "softmax",  name="murmur_output")(model.layers[-2].output)
+        murmur_model = tf.keras.Model(inputs=model.layers[0].output, outputs=[murmur_layer])
+        murmur_model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
+            metrics = [tf.keras.metrics.CategoricalAccuracy(), tf.keras.metrics.AUC(curve='ROC')])
+        
         epochs = 25
         batch_size = 20
 
@@ -194,14 +203,15 @@ def run_challenge_model(model, data, recordings, verbose):
     binarized_murmur_probabilities = np.argmax(murmur_probabilities_temp, axis = 1)
     binarized_outcome_probabilities = (outcome_probabilities_temp > 0.5) * 1
 
-    
     murmur_labels = np.zeros(len(murmur_classes), dtype=np.int_)
-    if 0 in binarized_murmur_probabilities:
-        murmur_labels[0] = 1
-    elif 1 in binarized_murmur_probabilities:
-        murmur_labels[1] = 1
-    elif 2 in binarized_murmur_probabilities:
-        murmur_labels[2] = 1
+    murmur_indx = np.bincount(binarized_murmur_probabilities).argmax()
+    murmur_labels[murmur_indx] = 1
+    #if 0 in binarized_murmur_probabilities:
+    #    murmur_labels[0] = 1
+    #elif 1 in binarized_murmur_probabilities:
+    #    murmur_labels[1] = 1
+    #elif 2 in binarized_murmur_probabilities:
+    #    murmur_labels[2] = 1
 
     outcome_labels = np.zeros(len(outcome_classes), dtype=np.int_)
     # 0 = abnormal outcome
@@ -324,7 +334,7 @@ def _shortcut_layer(input_tensor, out_tensor):
     x = tf.keras.layers.Activation('relu')(x)
     return x
 
-def build_model(sig_len,n_features, depth=6, use_residual=True):
+def base_model(sig_len,n_features, depth=10, use_residual=True):
     input_layer = tf.keras.layers.Input(shape=(sig_len,n_features))
 
     x = input_layer
@@ -340,11 +350,9 @@ def build_model(sig_len,n_features, depth=6, use_residual=True):
 
     gap_layer = tf.keras.layers.GlobalAveragePooling1D()(x)
 
-    murmur_output = tf.keras.layers.Dense(3, activation='softmax', name="murmur_output")(gap_layer)
-    clinical_output = tf.keras.layers.Dense(1, activation='sigmoid', name="clinical_output")(gap_layer)
+    output = tf.keras.layers.Dense(1, activation='sigmoid')(gap_layer)
 
-    model = tf.keras.models.Model(inputs=input_layer, outputs=[murmur_output,clinical_output])
-    model.compile(loss={'murmur_output': "categorical_crossentropy", 'clinical_output': "binary_crossentropy"}, optimizer=tf.keras.optimizers.Adam(learning_rate=0.001))
+    model = tf.keras.models.Model(inputs=input_layer, outputs=output)
     return model
 
 def build_murmur_model(sig_len,n_features, depth=10, use_residual=True):
