@@ -114,14 +114,14 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
                 
                 outcome_layer = tf.keras.layers.Dense(1, "sigmoid",  name="clinical_output")(model.layers[-2].output)
                 clinical_model = tf.keras.Model(inputs=model.layers[0].output, outputs=[outcome_layer])
-                for layer in clinical_model.layers[:2]:
+                for layer in clinical_model.layers[:-2]:
                     layer.trainable = False
                 clinical_model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
                     metrics = [tf.keras.metrics.BinaryAccuracy(),tf.keras.metrics.AUC(curve='ROC')])
 
                 murmur_layer = tf.keras.layers.Dense(3, "softmax",  name="murmur_output")(model.layers[-2].output)
                 murmur_model = tf.keras.Model(inputs=model.layers[0].output, outputs=[murmur_layer])
-                for layer in murmur_model.layers[:2]:
+                for layer in murmur_model.layers[:-2]:
                     layer.trainable = False
                 murmur_model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
                     metrics = [tf.keras.metrics.CategoricalAccuracy(), tf.keras.metrics.AUC(curve='ROC')])
