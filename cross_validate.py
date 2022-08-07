@@ -114,11 +114,15 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
                 
                 outcome_layer = tf.keras.layers.Dense(1, "sigmoid",  name="clinical_output")(model.layers[-2].output)
                 clinical_model = tf.keras.Model(inputs=model.layers[0].output, outputs=[outcome_layer])
+                for layer in clinical_model.layers[:2]:
+                    layer.trainable = False
                 clinical_model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
                     metrics = [tf.keras.metrics.BinaryAccuracy(),tf.keras.metrics.AUC(curve='ROC')])
 
                 murmur_layer = tf.keras.layers.Dense(3, "softmax",  name="murmur_output")(model.layers[-2].output)
                 murmur_model = tf.keras.Model(inputs=model.layers[0].output, outputs=[murmur_layer])
+                for layer in murmur_model.layers[:2]:
+                    layer.trainable = False
                 murmur_model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
                     metrics = [tf.keras.metrics.CategoricalAccuracy(), tf.keras.metrics.AUC(curve='ROC')])
                 
@@ -490,4 +494,8 @@ def pad_array(data, signal_length = None):
     for j in range(len(data)):
         new_arr[j,:len(data[j])] = data[j]
     return new_arr
-    
+
+class CustomCallback(tf.keras.callbacks.Callback):
+    def on_epoch_end(self, epoch, logs=None):
+        for layer in self.model.layers[:2]:
+            layer.trainable = True
