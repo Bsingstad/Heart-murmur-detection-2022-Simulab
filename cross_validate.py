@@ -96,7 +96,7 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
         print("Outcomes prevalence:")
         print(f"Abnormal = {len(np.where(train_outcomes==0)[0])}, Normal = {len(np.where(train_outcomes==1)[0])}")
         
-        val_data, val_murmurs, val_outcomes, val_patient_label = get_data(patient_files[val_index], data_folder, NEW_FREQUENCY, num_murmur_classes, num_outcome_classes,outcome_classes, max_len)
+        val_data, val_murmurs, val_outcomes, val_patient_labels= get_data(patient_files[val_index], data_folder, NEW_FREQUENCY, num_murmur_classes, num_outcome_classes,outcome_classes, max_len)
         print(f"Number of signals in validation data = {val_data.shape[0]}")
         print("Murmurs prevalence:")
         print(f"Present = {np.where(np.argmax(val_murmurs,axis=1)==0)[0].shape[0]}, Unknown = {np.where(np.argmax(val_murmurs,axis=1)==1)[0].shape[0]}, Absent = {np.where(np.argmax(val_murmurs,axis=1)==2)[0].shape[0]}")
@@ -162,9 +162,9 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
         outcome_probas.append(outcome_probabilities)
         murmur_trues.append(val_murmurs)
         outcome_trues.append(val_outcomes)
-        patient_labels.append(val_patient_label)
+        patient_labels.append(val_patient_labels)
 
-    return murmur_model, clinical_model, murmur_probas, outcome_probas, murmur_trues, outcome_trues, murmur_history, clinical_history, val_data
+    return murmur_model, clinical_model, murmur_probas, outcome_probas, murmur_trues, outcome_trues, murmur_history, clinical_history, val_data, patient_labels
 
         # Save the model.
         #save_challenge_model(model_folder, classes, imputer, classifier)
