@@ -85,6 +85,8 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
     clinical_history = []
     murmur_history = []
     patient_labels = []
+    val_murmur_patient_clf_cv = []
+    val_outcome_patient_clf_cv = []
 
     lr_schedule = tf.keras.callbacks.LearningRateScheduler(scheduler, verbose=0)
 
@@ -96,13 +98,16 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
         print("Outcomes prevalence:")
         print(f"Abnormal = {len(np.where(train_outcomes==0)[0])}, Normal = {len(np.where(train_outcomes==1)[0])}")
         
+        
         val_data, val_murmurs, val_outcomes, val_patient_labels= get_data(patient_files[val_index], data_folder, NEW_FREQUENCY, num_murmur_classes, num_outcome_classes,outcome_classes, max_len)
         print(f"Number of signals in validation data = {val_data.shape[0]}")
         print("Murmurs prevalence:")
         print(f"Present = {np.where(np.argmax(val_murmurs,axis=1)==0)[0].shape[0]}, Unknown = {np.where(np.argmax(val_murmurs,axis=1)==1)[0].shape[0]}, Absent = {np.where(np.argmax(val_murmurs,axis=1)==2)[0].shape[0]}")
         print("Outcomes prevalence:")
         print(f"Abnormal = {len(np.where(val_outcomes==0)[0])}, Normal = {len(np.where(val_outcomes==1)[0])}")
-        
+        val_murmur_patient_clf = cv_murmur[val_index]
+        val_outcome_patient_clf = cv_outcome[val_index]
+
         gpus = tf.config.list_logical_devices('GPU')
         strategy = tf.distribute.MirroredStrategy(gpus)
         with strategy.scope():
@@ -163,8 +168,10 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
         murmur_trues.append(val_murmurs)
         outcome_trues.append(val_outcomes)
         patient_labels.append(val_patient_labels)
+        val_murmur_patient_clf_cv.append(val_murmur_patient_clf)
+        val_outcome_patient_clf_cv.append(val_outcome_patient_clf)
 
-    return murmur_model, clinical_model, murmur_probas, outcome_probas, murmur_trues, outcome_trues, murmur_history, clinical_history, val_data, patient_labels
+    return murmur_model, clinical_model, murmur_probas, outcome_probas, murmur_trues, outcome_trues, murmur_history, clinical_history, val_data, patient_labels, val_murmur_patient_clf_cv, val_outcome_patient_clf_cv
 
         # Save the model.
         #save_challenge_model(model_folder, classes, imputer, classifier)
