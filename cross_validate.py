@@ -14,7 +14,7 @@ from gc import callbacks
 from random import shuffle
 from termios import VLNEXT
 from helper_code import *
-from team_code import base_model, load_challenge_model, build_murmur_model, build_clinical_model, scheduler, get_murmur_locations, pad_array, calculating_class_weights
+from team_code import base_model, load_challenge_model, build_murmur_model, build_clinical_model, scheduler, scheduler_2, get_murmur_locations, pad_array, calculating_class_weights
 import numpy as np, scipy as sp, scipy.stats, os, sys, joblib
 from sklearn.impute import SimpleImputer
 from sklearn.ensemble import RandomForestClassifier
@@ -40,6 +40,7 @@ from sklearn.utils.class_weight import compute_class_weight
 # Cross validate model.
 def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_folds, pre_train):
     NEW_FREQUENCY = 100
+    batch_size = 20
 
     # Find the patient data files.
     patient_files = find_patient_files(data_folder)
@@ -89,7 +90,7 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
     val_murmur_patient_clf_cv = []
     val_outcome_patient_clf_cv = []
 
-    lr_schedule = tf.keras.callbacks.LearningRateScheduler(scheduler, verbose=0)
+    lr_schedule = tf.keras.callbacks.LearningRateScheduler(scheduler_2, verbose=0)
 
     for train_index, val_index in skf.split(cv_murmur, cv_outcome):
         train_data, train_murmurs, train_outcomes, _ = get_data(patient_files[train_index], data_folder, NEW_FREQUENCY, num_murmur_classes, num_outcome_classes,outcome_classes,max_len)
@@ -109,13 +110,35 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
         val_murmur_patient_clf = cv_murmur[val_index]
         val_outcome_patient_clf = cv_outcome[val_index]
 
+        # Calculate weights
+        new_weights_murmur=calculating_class_weights(train_murmurs)
+        keys = np.arange(0,len(murmur_classes),1)
+        murmur_weight_dictionary = dict(zip(keys, new_weights_murmur.T[1]))
+
+        weight_outcome = np.unique(train_outcomes, return_counts=True)[1][0]/np.unique(train_outcomes, return_counts=True)[1][1]
+        outcome_weight_dictionary = {0: 1.0, 1:weight_outcome}
+
         gpus = tf.config.list_logical_devices('GPU')
         strategy = tf.distribute.MirroredStrategy(gpus)
+
         with strategy.scope():
             if pre_train == False:
                 # Initiate the model.
                 clinical_model = build_clinical_model(train_data.shape[1],train_data.shape[2])
                 murmur_model = build_murmur_model(train_data.shape[1],train_data.shape[2])
+                print("Train murmur model..")
+                temp_murmur_history = murmur_model.fit(x=train_data, y=train_murmurs, epochs=n_epochs_1, batch_size=batch_size,   
+                        verbose=1, validation_data = (val_data,val_murmurs),
+                        class_weight=murmur_weight_dictionary, shuffle = True,
+                        callbacks=[lr_schedule]
+                        )
+
+                print("Train clinical model..")
+                temp_clinical_history = clinical_model.fit(x=train_data, y=train_outcomes, epochs=n_epochs_2, batch_size=batch_size,  
+                        verbose=1, validation_data = (val_data,val_outcomes),
+                        class_weight=outcome_weight_dictionary, shuffle = True,
+                        callbacks=[lr_schedule]
+                        )
             elif pre_train == True:
                 model = base_model(train_data.shape[1],train_data.shape[2])
                 model.load_weights("./pretrained_model.h5")
@@ -124,39 +147,46 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
                 clinical_model = tf.keras.Model(inputs=model.layers[0].output, outputs=[outcome_layer])
                 for layer in clinical_model.layers[:-2]:
                     layer.trainable = False
-                clinical_model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
+                clinical_model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.00001), 
                     metrics = [tf.keras.metrics.BinaryAccuracy(),tf.keras.metrics.AUC(curve='ROC')])
-
+                
+                clinical_model.fit(x=train_data, y=train_outcomes, epochs=5, batch_size=batch_size,  
+                        verbose=1, validation_data = (val_data,val_outcomes),
+                        class_weight=outcome_weight_dictionary, shuffle = True)
+                
+                for layer in clinical_model.layers[:-2]:
+                    layer.trainable = True
+                
+                clinical_model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), 
+                    metrics = [tf.keras.metrics.BinaryAccuracy(),tf.keras.metrics.AUC(curve='ROC')])
+                
+                temp_clinical_history = clinical_model.fit(x=train_data, y=train_outcomes, epochs=20, batch_size=batch_size,  
+                        verbose=1, validation_data = (val_data,val_outcomes),
+                        class_weight=outcome_weight_dictionary, shuffle = True)
+                
                 murmur_layer = tf.keras.layers.Dense(3, "softmax",  name="murmur_output")(model.layers[-2].output)
                 murmur_model = tf.keras.Model(inputs=model.layers[0].output, outputs=[murmur_layer])
+                
                 for layer in murmur_model.layers[:-2]:
                     layer.trainable = False
-                murmur_model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
+
+                murmur_model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.00001), 
                     metrics = [tf.keras.metrics.CategoricalAccuracy(), tf.keras.metrics.AUC(curve='ROC')])
                 
-            # Calculate weights
-            new_weights_murmur=calculating_class_weights(train_murmurs)
-            keys = np.arange(0,len(murmur_classes),1)
-            murmur_weight_dictionary = dict(zip(keys, new_weights_murmur.T[1]))
+                murmur_model.fit(x=train_data, y=train_murmurs, epochs=5, batch_size=batch_size,   
+                        verbose=1, validation_data = (val_data,val_murmurs),
+                        class_weight=murmur_weight_dictionary, shuffle = True)
+                
+                for layer in murmur_model.layers[:-2]:
+                    layer.trainable = True
 
-            weight_outcome = np.unique(train_outcomes, return_counts=True)[1][0]/np.unique(train_outcomes, return_counts=True)[1][1]
-            outcome_weight_dictionary = {0: 1.0, 1:weight_outcome}
+                murmur_model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.00001), 
+                    metrics = [tf.keras.metrics.CategoricalAccuracy(), tf.keras.metrics.AUC(curve='ROC')])
+                
+                temp_murmur_history = murmur_model.fit(x=train_data, y=train_murmurs, epochs=20, batch_size=batch_size,   
+                        verbose=1, validation_data = (val_data,val_murmurs),
+                        class_weight=murmur_weight_dictionary, shuffle = True)
 
-
-            batch_size = 20
-            print("Train murmur model..")
-            temp_murmur_history = murmur_model.fit(x=train_data, y=train_murmurs, epochs=n_epochs_1, batch_size=batch_size,   
-                    verbose=1, validation_data = (val_data,val_murmurs),
-                    class_weight=murmur_weight_dictionary, shuffle = True,
-                    callbacks=[lr_schedule]
-                    )
-
-            print("Train clinical model..")
-            temp_clinical_history = clinical_model.fit(x=train_data, y=train_outcomes, epochs=n_epochs_2, batch_size=batch_size,  
-                    verbose=1, validation_data = (val_data,val_outcomes),
-                    class_weight=outcome_weight_dictionary, shuffle = True,
-                    callbacks=[lr_schedule]
-                    )
 
             murmur_probabilities = murmur_model.predict(val_data)
 

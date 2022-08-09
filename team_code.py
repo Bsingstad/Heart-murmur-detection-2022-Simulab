@@ -426,6 +426,20 @@ def scheduler(epoch, lr):
     else:
         return lr
 
+def scheduler_2(epoch, lr):
+    if epoch == 0:
+        reducer = lr * 0.1
+    if epoch == 10:
+        reducer = lr * 0.1
+    if epoch == 20:
+        reducer = lr * 0.1
+    if epoch < 10:
+        return lr - reducer
+    if (epoch >= 10) and (epoch < 20):
+        return lr - reducer
+    if (epoch >= 20) and (epoch < 30):
+        return lr - reducer
+
 def get_murmur_locations(data):
     murmur_location = None
     for l in data.split('\n'):
