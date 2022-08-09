@@ -40,7 +40,7 @@ from sklearn.utils.class_weight import compute_class_weight
 # Cross validate model.
 def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_folds, pre_train):
     NEW_FREQUENCY = 100
-    batch_size = 20
+    batch_size = 30
 
     # Find the patient data files.
     patient_files = find_patient_files(data_folder)
@@ -150,7 +150,7 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
                 for layer in murmur_model.layers[:-2]:
                     layer.trainable = False
 
-                murmur_model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.00001), 
+                murmur_model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
                     metrics = [tf.keras.metrics.CategoricalAccuracy(), tf.keras.metrics.AUC(curve='ROC')])
                 
                 murmur_model.fit(x=train_data, y=train_murmurs, epochs=5, batch_size=batch_size,   
@@ -160,7 +160,7 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
                 for layer in murmur_model.layers[:-2]:
                     layer.trainable = True
 
-                murmur_model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), 
+                murmur_model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
                     metrics = [tf.keras.metrics.CategoricalAccuracy(), tf.keras.metrics.AUC(curve='ROC')])
                 
                 temp_murmur_history = murmur_model.fit(x=train_data, y=train_murmurs, epochs=n_epochs_1, batch_size=batch_size,   
@@ -172,7 +172,7 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
                 clinical_model = tf.keras.Model(inputs=model.layers[0].output, outputs=[outcome_layer])
                 for layer in clinical_model.layers[:-2]:
                     layer.trainable = False
-                clinical_model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.00001), 
+                clinical_model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
                     metrics = [tf.keras.metrics.BinaryAccuracy(),tf.keras.metrics.AUC(curve='ROC')])
                 
                 clinical_model.fit(x=train_data, y=train_outcomes, epochs=5, batch_size=batch_size,  
@@ -182,7 +182,7 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
                 for layer in clinical_model.layers[:-2]:
                     layer.trainable = True
                 
-                clinical_model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), 
+                clinical_model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
                     metrics = [tf.keras.metrics.BinaryAccuracy(),tf.keras.metrics.AUC(curve='ROC')])
                 
                 temp_clinical_history = clinical_model.fit(x=train_data, y=train_outcomes, epochs=n_epochs_2, batch_size=batch_size,  
