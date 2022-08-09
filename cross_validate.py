@@ -148,14 +148,14 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
             temp_murmur_history = murmur_model.fit(x=train_data, y=train_murmurs, epochs=n_epochs_1, batch_size=batch_size,   
                     verbose=1, validation_data = (val_data,val_murmurs),
                     class_weight=murmur_weight_dictionary, shuffle = True,
-                    callbacks=[lr_schedule, CustomCallback(murmur_model)]
+                    callbacks=[lr_schedule]
                     )
 
             print("Train clinical model..")
             temp_clinical_history = clinical_model.fit(x=train_data, y=train_outcomes, epochs=n_epochs_2, batch_size=batch_size,  
                     verbose=1, validation_data = (val_data,val_outcomes),
                     class_weight=outcome_weight_dictionary, shuffle = True,
-                    callbacks=[lr_schedule, [CustomCallback(clinical_model)]]
+                    callbacks=[lr_schedule]
                     )
 
             murmur_probabilities = murmur_model.predict(val_data)
@@ -215,14 +215,3 @@ def get_data(patient_files, data_folder, new_frequenzy, num_murmur_classes, num_
     patient_label = np.asarray(patient_label)
 
     return data_padded, murmurs, outcomes, patient_label
-
-
-
-class CustomCallback(tf.keras.callbacks.Callback):
-    def __init__(self, model):
-        self.model = model
-
-    def on_epoch_end(self, epoch, logs=None):
-        if epoch == 5:
-            for layer in self.model.layers[:-2]:
-                layer.trainable = True
