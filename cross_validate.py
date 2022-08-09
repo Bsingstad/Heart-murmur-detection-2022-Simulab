@@ -140,6 +140,7 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
                         callbacks=[lr_schedule]
                         )
             elif pre_train == True:
+                print("Train murmur model..")
                 model = base_model(train_data.shape[1],train_data.shape[2])
                 model.load_weights("./pretrained_model.h5")
                 
@@ -165,7 +166,8 @@ def cv_challenge_model(data_folder, result_folder, n_epochs_1, n_epochs_2, n_fol
                 temp_murmur_history = murmur_model.fit(x=train_data, y=train_murmurs, epochs=n_epochs_1, batch_size=batch_size,   
                         verbose=1, validation_data = (val_data,val_murmurs),
                         class_weight=murmur_weight_dictionary, shuffle = True, callbacks=[lr_schedule])
-
+                
+                print("Train clinical model..")
                 outcome_layer = tf.keras.layers.Dense(1, "sigmoid",  name="clinical_output")(model.layers[-2].output)
                 clinical_model = tf.keras.Model(inputs=model.layers[0].output, outputs=[outcome_layer])
                 for layer in clinical_model.layers[:-2]:
