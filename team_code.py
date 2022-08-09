@@ -30,12 +30,7 @@ from sklearn.utils.class_weight import compute_class_weight
 
 
 
-def calculating_class_weights(y_true):
-    number_dim = np.shape(y_true)[1]
-    weights = np.empty([number_dim, 2])
-    for i in range(number_dim):
-        weights[i] = compute_class_weight(class_weight='balanced', classes=[0.,1.], y=y_true[:, i])
-    return weights
+
     
 # Train your model.
 def train_challenge_model(data_folder, model_folder, verbose):
@@ -443,12 +438,21 @@ def get_murmur_locations(data):
         raise ValueError('No outcome available. Is your code trying to load labels from the hidden data?')
     return murmur_location
 
-def pad_array(data):
+def pad_array(data, signal_length = None):
     max_len = 0
     for i in data:
         if len(i) > max_len:
             max_len = len(i)
+    if not signal_length == None:
+        max_len = signal_length
     new_arr = np.zeros((len(data),max_len))
     for j in range(len(data)):
         new_arr[j,:len(data[j])] = data[j]
     return new_arr
+
+def calculating_class_weights(y_true):
+    number_dim = np.shape(y_true)[1]
+    weights = np.empty([number_dim, 2])
+    for i in range(number_dim):
+        weights[i] = compute_class_weight(class_weight='balanced', classes=[0.,1.], y=y_true[:, i])
+    return weights
