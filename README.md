@@ -1,5 +1,7 @@
 # George B. Moody PhysioNet Challenge 2022 - Simulab
 
+![alt text](docs/murmur.png)
+
 ## Team members:
 * Markus Johnsen
 * Johan Ravn
@@ -8,8 +10,6 @@
 * Antony M. Gitau
 * Bjørn-Jostein Singstad
 ---------------------------------
-
-![alt text](docs/murmur.png)
 
 ## What's in this repository?
 This repository contains the code for our contribution to the George B. Moody PhysioNet Challenge 2022. The purpose of this challenge is to detect murmurs and predict clinical outcome from phonocardiograms. The code is written in Python.
