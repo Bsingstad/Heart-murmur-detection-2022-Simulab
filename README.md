@@ -1,24 +1,40 @@
-# Python example classifier code for the George B. Moody PhysioNet Challenge 2022
-
-
-# Notebook:
-https://www.kaggle.com/code/bjoernjostein/heart-sound-clf-using-incepiontime-data-v2-1-new
-
-# Paper:
-https://www.overleaf.com/project/62ac5159618b17866a4f9b1e
-
-# Tasks
-- [ ] @Antony, Upload relevant papers (about Deep learning for murmur detection and also XAI if you manage to find this) to the paper folder in this github-repo
-- [ ] @Bjørn-Jostein will update this repo with a Jupyter Notebook @Anthony can use to run experiments
-- [x] @Antony, add your full name and affilitaion to paper: https://www.overleaf.com/project/62ac5159618b17866a4f9b1e
-- [ ] @Antony, add more text to introduction part (cite papers from previous work)
+# George B. Moody PhysioNet Challenge 2022 - Simulab
+### Collaborators:
+* Markus Johnsen
+* Johan Ravn
+* Lars Ailo Bongo
+* Henrik Schirmer
+* Antony M. Gitau
+* Bjørn-Jostein Singstad
 
 ---------------------------------
 
-
 ## What's in this repository?
+This repository contains the code for our contribution to the George B. Moody PhysioNet Challenge 2022. The purpose of this challenge is to detect murmurs and predict clinical outcome from phonocardiograms. The code is written in Python.
 
-This repository contains a simple example to illustrate how to format a Python entry for the George B. Moody PhysioNet Challenge 2022.. You can try it by running the following commands on the Challenge training sets. These commands should take a few minutes or less to run from start to finish on a recent personal computer.
+### Python scripts
+This repository contains some scripts we can edit and some scripts provided by the organizers of George B. Moody PhysioNet Challenge 2022 which should **NOT** be edited
+
+#### Can be edited:
+* cross_validate.py
+* team_code.py
+
+#### Should not be edited
+* evaluate_model.py
+* helper_code.py
+* run_model.py
+* train_model.py
+
+### Notebooks:
+The repository also contains Jupyter Notebooks which makes easier to experiment with the data, models and other parameters. Some of the notebooks are designed to use in Google Colab in order to get access to GPUs and some notebooks are ok to run on your local computer.
+
+#### Colab:
+* execute_cv_training_and_test.ipynb
+
+#### Local:
+* EDA-Phonocardiogram-dataset.ipynb
+
+ You can try it by running the following commands on the Challenge training sets. These commands should take a few minutes or less to run from start to finish on a recent personal computer.
 
 For this example, we implemented a random forest classifier with several features. You can use a different classifier, features, and libraries for your entry. This simpple example is designed **not** not to perform well, so you should **not** use it as a baseline for your model's performance.
 
