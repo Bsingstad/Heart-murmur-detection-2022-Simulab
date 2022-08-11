@@ -1,5 +1,6 @@
 # George B. Moody PhysioNet Challenge 2022 - Simulab
-### Collaborators:
+
+## Team members:
 * Markus Johnsen
 * Johan Ravn
 * Lars Ailo Bongo
