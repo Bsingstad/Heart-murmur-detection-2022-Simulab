@@ -16,25 +16,45 @@ This repository contains the code for our contribution to the George B. Moody Ph
 This repository contains some scripts we can edit and some scripts provided by the organizers of George B. Moody PhysioNet Challenge 2022 which should **NOT** be edited
 
 #### Can be edited:
-* cross_validate.py
-* team_code.py
+* `cross_validate.py`
+* `team_code.py`
 
 #### Should not be edited
-* evaluate_model.py
-* helper_code.py
-* run_model.py
-* train_model.py
+* `evaluate_model.py`
+* `helper_code.py`
+* `run_model.py`
+* `train_model.py`
 
 ### Notebooks:
 The repository also contains Jupyter Notebooks which makes easier to experiment with the data, models and other parameters. Some of the notebooks are designed to use in Google Colab in order to get access to GPUs and some notebooks are ok to run on your local computer.
 
 #### Colab:
-* execute_cv_training_and_test.ipynb
-
+* `execute_cv_training_and_test.ipynb` # contains code for training, testing, cross-validation and some XAI stuff TODO: split into 2-3 notebooks.
+* `using_2015_dataset.ipynb` # contains code for pretraing model on phonocardiogram data from PhysioNet Challenge 2016. returns a .h5 file
 #### Local:
-* EDA-Phonocardiogram-dataset.ipynb
+* `EDA-Phonocardiogram-dataset.ipynb`
 
- You can try it by running the following commands on the Challenge training sets. These commands should take a few minutes or less to run from start to finish on a recent personal computer.
+### Papers:
+This folder contains some relevant papers
+
+### Other files:
+This repository also contains the following files 
+* `.gitignore`
+* `Dockerfile`
+* `LICENSE`
+* `requirements.txt`
+
+
+The Dockerfile and the requirements.txt are very important as they are used to build the docker image when submitting our code to the challenge organizers.
+
+## Data:
+The main data source is [the CirCor DigiScope Dataset](https://physionet.org/content/circor-heart-sound/1.0.0/) . When using the Jupyter Notebooks in Colab we need to downlad this dataset each time we start a new session and to speed up the downloading we have created [a Kaggle version](https://www.kaggle.com/datasets/bjoernjostein/the-circor-digiscope-phonocardiogram-dataset-v2) of this dataset. To be able to download the dataset you will have to sign up for a Kaggle account, get a kaggle.json file from you Kaggle profile (containing a API token) and upload it to the root folder in the temporary folder in Colab.
+
+To pretrain the models we use the open dataset from [PhysioNet Challenge 2016](https://physionet.org/content/challenge-2016/1.0.0/) this is also available on [Kaggle](https://www.kaggle.com/datasets/bjoernjostein/physionet-challenge-2016).
+
+## Run the code locally: 
+
+You can try it by running the following commands on the Challenge training sets. These commands should take a few minutes or less to run from start to finish on a recent personal computer.
 
 For this example, we implemented a random forest classifier with several features. You can use a different classifier, features, and libraries for your entry. This simpple example is designed **not** not to perform well, so you should **not** use it as a baseline for your model's performance.
 
@@ -53,35 +73,13 @@ You can train and run your model by running
 
 where `training_data` is a folder with the training data files, `model` is a folder for saving your model, `test_data` is a folder with the test data files (you can use the training data for debugging and cross-validation), and `test_outputs` is a folder for saving your model outputs. The [2022 Challenge website](https://physionetchallenges.org/2022/) provides a training database with a description of the contents and structure of the data files.
 
-You can evaluate your model by pulling or downloading the [evaluation code](https://github.com/physionetchallenges/evaluation-2022) and running
+You can evaluate your model by running
 
     python evaluate_model.py labels outputs scores.csv class_scores.csv
 
 where `labels` is a folder with labels for the data, such as the training database on the PhysioNet webpage; `outputs` is a folder containing files with your model's outputs for the data; `scores.csv` (optional) is a collection of scores for your model; and `class_scores.csv` (optional) is a collection of per-class scores for your model.
 
-## Which scripts I can edit?
-
-We will run the `train_model.py` and `run_model.py` scripts to train and run your model, so please check these scripts and the functions that they call.
-
-Please edit the following script to add your training and testing code:
-
-* `team_code.py` is a script with functions for training and running your model.
-
-Please do **not** edit the following scripts. We will use the unedited versions of these scripts when running your code:
-
-* `train_model.py` is a script for training your model.
-* `run_model.py` is a script for running your trained model.
-* `helper_code.py` is a script with helper functions that we used for our code. You are welcome to use them in your code.
-
-These scripts must remain in the root path of your repository, but you can put other scripts and other files elsewhere in your repository.
-
-## How do I train, save, load, and run my model?
-
-To train and save your models, please edit the `train_challenge_model` function in the `team_code.py` script. Please do not edit the input or output arguments of the `train_challenge_model` function.
-
-To load and run your trained model, please edit the `load_challenge_model` and `run_challenge_model` functions in the `team_code.py` script. Please do not edit the input or output arguments of the functions of the `load_challenge_model` and `run_challenge_model` functions.
-
-## How do I run these scripts in Docker?
+### How do I run these scripts in Docker?
 
 Docker and similar platforms allow you to containerize and package your code with specific dependencies so that you can run your code reliably in other computing environments and operating systems.
 
@@ -133,14 +131,3 @@ If you have trouble running your code, then please try the follow steps to run t
         root@[...]:/physionet# exit
         Exit
 
-## How do I learn more?
-
-Please see the [Challenge website](https://physionetchallenges.org/2022/) for more details. Please post questions and concerns on the [Challenge discussion forum](https://groups.google.com/forum/#!forum/physionet-challenges).
-
-## Useful links
-
-* [Challenge website](https://physionetchallenges.org/2022/)
-* [MATLAB example classifier code](https://github.com/physionetchallenges/matlab-classifier-2022)
-* [Scoring code](https://github.com/physionetchallenges/evaluation-2022)
-* [Frequently asked questions (FAQ) for this year's Challenge](https://physionetchallenges.org/2022/faq/) 
-* [Frequently asked questions (FAQ) about the Challenges in general](https://physionetchallenges.org/faq/) 
