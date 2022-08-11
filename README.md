@@ -1,5 +1,7 @@
 # George B. Moody PhysioNet Challenge 2022 - Simulab
 
+![alt text](docs/murmur.png)
+
 ## Team members:
 * Markus Johnsen
 * Johan Ravn
@@ -7,7 +9,6 @@
 * Henrik Schirmer
 * Antony M. Gitau
 * Bjørn-Jostein Singstad
-
 ---------------------------------
 
 ## What's in this repository?
