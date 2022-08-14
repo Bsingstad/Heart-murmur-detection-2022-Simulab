@@ -38,10 +38,10 @@ def train_challenge_model(data_folder, model_folder, verbose):
     if verbose >= 1:
         print('Finding data files...')
 
-    PRE_TRAIN = True
+    PRE_TRAIN = False
     NEW_FREQUENCY = 100 # longest signal, while resampling to 500Hz = 32256 samples
-    EPOCHS_1 = 25
-    EPOCHS_2 = 25
+    EPOCHS_1 = 30
+    EPOCHS_2 = 20
     BATCH_SIZE_1 = 20
     BATCH_SIZE_2 = 20
     # Find the patient data files.
@@ -119,7 +119,7 @@ def train_challenge_model(data_folder, model_folder, verbose):
     weight_outcome = np.unique(outcomes, return_counts=True)[1][0]/np.unique(outcomes, return_counts=True)[1][1]
     outcome_weight_dictionary = {0: 1.0, 1:weight_outcome}
 
-    lr_schedule = tf.keras.callbacks.LearningRateScheduler(scheduler, verbose=0)
+    lr_schedule = tf.keras.callbacks.LearningRateScheduler(scheduler_2, verbose=0)
 
     gpus = tf.config.list_logical_devices('GPU')
     strategy = tf.distribute.MirroredStrategy(gpus)
@@ -273,6 +273,39 @@ def run_challenge_model(model, data, recordings, verbose):
 #
 ################################################################################
 
+def get_features_my_func(data, recordings):
+    # Extract the age group and replace with the (approximate) number of months for the middle of the age group.
+    age_group = get_age(data)
+    age = 0
+
+    if compare_strings(age_group, 'Neonate'):
+        age = 0.5
+    elif compare_strings(age_group, 'Infant'):
+        age = 6
+    elif compare_strings(age_group, 'Child'):
+        age = 6 * 12
+    elif compare_strings(age_group, 'Adolescent'):
+        age = 15 * 12
+    elif compare_strings(age_group, 'Young Adult'):
+        age = 20 * 12
+    else:
+        age = float('nan')
+
+    # Extract sex. Use one-hot encoding.
+    sex = get_sex(data)
+
+    sex_feature = 0
+    if compare_strings(sex, 'Male'):
+        sex_feature = 1
+
+    # Extract height and weight.
+    height = get_height(data)
+    weight = get_weight(data)
+
+    # Extract pregnancy status.
+    is_pregnant = get_pregnancy_status(data)
+
+    return np.array([age, sex_feature, height, weight, is_pregnant])
 
 # Extract features from the data.
 def get_features(data, recordings):
