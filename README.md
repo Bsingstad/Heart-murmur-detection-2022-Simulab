@@ -1,6 +1,8 @@
-# George B. Moody PhysioNet Challenge 2022 - Simulab
+# Phonocardiogram Classification Using 1-Dimensional Inception Time Convolutional Neural Networks : George B. Moody PhysioNet Challenge 2022 - Simulab
 
-![alt text](docs/murmur.png)
+
+![alt text](docs/CNN_architecture.png)
+#### The 1-D CNN Inception time Architecture of the two classifiers
 
 ## Team members:
 * Markus Johnsen
@@ -12,7 +14,19 @@
 ---------------------------------
 
 ## What's in this repository?
-This repository contains the code for our contribution to the George B. Moody PhysioNet Challenge 2022. The purpose of this challenge is to detect murmurs and predict clinical outcome from phonocardiograms. The code is written in Python.
+This repository contains the code for our contribution to the George B. Moody PhysioNet Challenge 2022. The objective of this challenge is to identify murmurs as present, absent or unclear and predict clinical outcome as normal or abnormal from phonocardiograms collected from multiple auscultation locations on the chest walls using digital stethoscope. 
+
+We trained and tested two 1-dimensional convolutional
+neural networks (CNN) on a PCG data set from a pediatric
+population of 1568 individuals. One model predicted murmurs, while the other model predicted clinical outcomes.
+Both models were trained to give recording-wise predictions, while the final predictions were given for every patient (patient wise predictions).
+
+Our team, Simulab, trained a clinical outcome classifier that achieved a
+challenge cost score of 8720 (ranked 1st out of 305 submissions) and the murmur classifier achieved a weighted
+accuracy of 0.585 (ranked 182nd out of 305 submissions)
+on the validation set.
+
+## A brief of the files and folders in this repository
 
 ### Python scripts
 This repository contains some scripts we can edit and some scripts provided by the organizers of George B. Moody PhysioNet Challenge 2022 which should **NOT** be edited
@@ -54,6 +68,7 @@ The main data source is [the CirCor DigiScope Dataset](https://physionet.org/con
 
 To pretrain the models we use the open dataset from [PhysioNet Challenge 2016](https://physionet.org/content/challenge-2016/1.0.0/) this is also available on [Kaggle](https://www.kaggle.com/datasets/bjoernjostein/physionet-challenge-2016).
 
+## Dependencies
 ## Run the code locally: 
 
 You can try it by running the following commands on the Challenge training sets. These commands should take a few minutes or less to run from start to finish on a recent personal computer.
@@ -61,7 +76,6 @@ You can try it by running the following commands on the Challenge training sets.
 For this example, we implemented a random forest classifier with several features. You can use a different classifier, features, and libraries for your entry. This simpple example is designed **not** not to perform well, so you should **not** use it as a baseline for your model's performance.
 
 This code uses four main scripts, described below, to train and run a model for the 2022 Challenge.
-
 ## Run the code using Docker
 
 You can install the dependencies for these scripts by creating a Docker image (see below) and running
@@ -80,6 +94,7 @@ You can evaluate your model by running
     python evaluate_model.py labels outputs scores.csv class_scores.csv
 
 where `labels` is a folder with labels for the data, such as the training database on the PhysioNet webpage; `outputs` is a folder containing files with your model's outputs for the data; `scores.csv` (optional) is a collection of scores for your model; and `class_scores.csv` (optional) is a collection of per-class scores for your model.
+
 
 ### How do I run these scripts in Docker?
 
