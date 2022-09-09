@@ -1,4 +1,5 @@
-# Phonocardiogram Classification Using 1-Dimensional Inception Time Convolutional Neural Networks : George B. Moody PhysioNet Challenge 2022 - Simulab
+# Phonocardiogram Classification Using 1-Dimensional Inception Time Convolutional Neural Networks : George B. Moody PhysioNet Challenge 2022 - Simulab.([Paper Preprint](https://cinc.org/2022/Program/accepted/108_Preprint.pdf))
+---
 
 
 ![alt text](docs/CNN_architecture.png)
@@ -14,19 +15,19 @@
 ---------------------------------
 
 ## What's in this repository?
-This repository contains the code for our contribution to the George B. Moody PhysioNet Challenge 2022. The objective of this challenge is to identify murmurs as present, absent or unclear and predict clinical outcome as normal or abnormal from phonocardiograms collected from multiple auscultation locations on the chest walls using digital stethoscope. 
+This repository contains the code for our contribution to the George B. Moody PhysioNet Challenge 2022. The objective of this challenge was to identify murmurs as present, absent or unclear and predict clinical outcome as normal or abnormal from phonocardiograms collected from multiple auscultation locations on the chest walls using digital stethoscope. 
 
 We trained and tested two 1-dimensional convolutional
-neural networks (CNN) on a PCG data set from a pediatric
+neural networks (CNN) on a PCG data set (5272 PCGs) from a pediatric
 population of 1568 individuals. One model predicted murmurs, while the other model predicted clinical outcomes.
 Both models were trained to give recording-wise predictions, while the final predictions were given for every patient (patient wise predictions).
 
-Our team, Simulab, trained a clinical outcome classifier that achieved a
-challenge cost score of 8720 (ranked 1st out of 305 submissions) and the murmur classifier achieved a weighted
-accuracy of 0.585 (ranked 182nd out of 305 submissions)
+Our team, **Simulab**, trained a clinical outcome classifier that achieved a challenge cost score of `8720 (ranked 1st out of 305 submissions)` and the murmur classifier achieved a weighted
+accuracy of `0.585 (ranked 182nd out of 305 submissions)`
 on the validation set.
 
 ## A brief of the files and folders in this repository
+
 
 ### Python scripts
 This repository contains some scripts we can edit and some scripts provided by the organizers of George B. Moody PhysioNet Challenge 2022 which should **NOT** be edited
@@ -49,33 +50,39 @@ The repository also contains Jupyter Notebooks which makes easier to experiment 
 * `using_2015_dataset.ipynb` # contains code for pretraing model on phonocardiogram data from PhysioNet Challenge 2016. returns a .h5 file
 #### Local:
 * `EDA-Phonocardiogram-dataset.ipynb`
+* `EDA-Phonocardiogram-dataset-BJS.ipynb`
 
 ### Papers:
-This folder contains some relevant papers
+This folder contains some relevant papers in cardiology, deep learning  and eXplainable AI (XAI)
 
 ### Other files:
 This repository also contains the following files 
 * `.gitignore`
-* `Dockerfile`
 * `LICENSE`
+* `Dockerfile`
 * `requirements.txt`
 
 
 The Dockerfile and the requirements.txt are very important as they are used to build the docker image when submitting our code to the challenge organizers.
 
 ## Data:
-The main data source is [the CirCor DigiScope Dataset](https://physionet.org/content/circor-heart-sound/1.0.0/) . When using the Jupyter Notebooks in Colab we need to downlad this dataset each time we start a new session and to speed up the downloading we have created [a Kaggle version](https://www.kaggle.com/datasets/bjoernjostein/the-circor-digiscope-phonocardiogram-dataset-v2) of this dataset. To be able to download the dataset you will have to sign up for a Kaggle account, get a kaggle.json file from you Kaggle profile (containing a API token) and upload it to the root folder in the temporary folder in Colab.
+The main data source is [the CirCor DigiScope Dataset](https://physionet.org/content/circor-heart-sound/1.0.0/) . When using the Jupyter Notebooks in Colab we need to download this dataset each time we start a new session.
+ 
+ To speed up the downloading we have created [a Kaggle version](https://www.kaggle.com/datasets/bjoernjostein/the-circor-digiscope-phonocardiogram-dataset-v2) of this dataset. 
+ 
+ To download the dataset, you will have to sign up for a Kaggle account, get a kaggle.json file from you Kaggle profile (containing a API token) and upload it to the root folder in the temporary folder in Colab.
 
-To pretrain the models we use the open dataset from [PhysioNet Challenge 2016](https://physionet.org/content/challenge-2016/1.0.0/) this is also available on [Kaggle](https://www.kaggle.com/datasets/bjoernjostein/physionet-challenge-2016).
+To pretrain the models we use the open dataset from [PhysioNet Challenge 2016](https://physionet.org/content/challenge-2016/1.0.0/), also available on [Kaggle](https://www.kaggle.com/datasets/bjoernjostein/physionet-challenge-2016).
 
 ## Dependencies
 ## Run the code locally: 
 
 You can try it by running the following commands on the Challenge training sets. These commands should take a few minutes or less to run from start to finish on a recent personal computer.
 
-For this example, we implemented a random forest classifier with several features. You can use a different classifier, features, and libraries for your entry. This simpple example is designed **not** not to perform well, so you should **not** use it as a baseline for your model's performance.
+For this example, we implemented a random forest classifier with several features. You can use a different classifier, features, and libraries for your entry. This simple example is designed **not** to perform well, so you should **not** use it as a baseline for your model's performance.
 
 This code uses four main scripts, described below, to train and run a model for the 2022 Challenge.
+
 ## Run the code using Docker
 
 You can install the dependencies for these scripts by creating a Docker image (see below) and running
@@ -148,3 +155,23 @@ If you have trouble running your code, then please try the follow steps to run t
         root@[...]:/physionet# exit
         Exit
 
+
+# Results
+
+
+|Model| Best parameters | Metrics | Training | Validation |
+|:-----:|:-----------------:|:---------:|:----------:|:------------:|
+|Murmur|Adam optimization|weighted accuracy |0.497 ± 0.083| 0.585|
+||Weighted categorical cross entropy|challenge metrics|13158 ± 1283
+||20 batch size|accuracy|0.446 ± 0.070
+||30 epoch|F measure|0.403 ± 0.055
+|Clinical | Adam optimization| weighted accuracy|0.713 ± 0.042|
+||20 batch size|challenge metrics|12315 ± 903|8720
+||20 epoch| accuracy |0.51 ± 0.047
+||weighted categorical cross entropy| F measure|0.465 ± 0.061 
+
+
+# Citations
+
+
+# License
