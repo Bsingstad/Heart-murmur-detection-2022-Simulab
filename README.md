@@ -1,4 +1,4 @@
-# Phonocardiogram Classification Using 1-Dimensional Inception Time Convolutional Neural Networks : George B. Moody PhysioNet Challenge 2022 - Simulab.([Paper Preprint](https://cinc.org/2022/Program/accepted/108_Preprint.pdf))
+# Phonocardiogram Classification Using 1-Dimensional Inception Time Convolutional Neural Networks : George B. Moody PhysioNet Challenge 2022 - Simulab ([Paper Preprint](https://cinc.org/2022/Program/accepted/108_Preprint.pdf)).
 ---
 
 
@@ -159,19 +159,19 @@ If you have trouble running your code, then please try the follow steps to run t
 # Results
 
 
-|Model| Best parameters | Metrics | Training | Validation |
-|:-----:|:-----------------:|:---------:|:----------:|:------------:|
-|Murmur|Adam optimization|weighted accuracy |0.497 ± 0.083| 0.585|
-||Weighted categorical cross entropy|challenge metrics|13158 ± 1283
-||20 batch size|accuracy|0.446 ± 0.070
-||30 epoch|F measure|0.403 ± 0.055
-|Clinical | Adam optimization| weighted accuracy|0.713 ± 0.042|
-||20 batch size|challenge metrics|12315 ± 903|8720
-||20 epoch| accuracy |0.51 ± 0.047
-||weighted categorical cross entropy| F measure|0.465 ± 0.061 
+|Model| Best parameters | Metrics | Training | Validation | Test |
+|:-----:|:-----------------:|:---------:|:----------:|:------------:|:----:|
+|Murmur|Adam optimization|Weighted accuracy |0.497 ± 0.083| 0.585|0.593
+||Weighted categorical cross entropy|Challenge metrics|13158 ± 1283|8866|13134
+||20 batch size|Accuracy|0.446 ± 0.070|0.423|0.497
+||30 epoch|F measure|0.403 ± 0.055|0.384|0.398
+|Clinical | Adam optimization| Weighted accuracy|0.713 ± 0.042|0.732|0.703
+||20 batch size|Challenge metrics|12315 ± 903|8720|12419
+||20 epoch| Accuracy |0.51 ± 0.047|0.537|0.537
+||Weighted categorical cross entropy| F measure|0.465 ± 0.061 |0.530|0.503
 
 
-# Citations
+# Citation
 
 
 # License
