@@ -38,12 +38,13 @@ def train_challenge_model(data_folder, model_folder, verbose):
     if verbose >= 1:
         print('Finding data files...')
 
-    PRE_TRAIN = True
+    PRE_TRAIN = False
     NEW_FREQUENCY = 100 # longest signal, while resampling to 500Hz = 32256 samples
     EPOCHS_1 = 30
     EPOCHS_2 = 20
     BATCH_SIZE_1 = 20
     BATCH_SIZE_2 = 20
+
     # Find the patient data files.
     patient_files = find_patient_files(data_folder)
     num_patient_files = len(patient_files)
@@ -128,66 +129,33 @@ def train_challenge_model(data_folder, model_folder, verbose):
             # Initiate the model.
             clinical_model = build_clinical_model(data_padded.shape[1],data_padded.shape[2])
             murmur_model = build_murmur_model(data_padded.shape[1],data_padded.shape[2])
-                
-            murmur_model.fit(x=data_padded, y=murmurs, epochs=EPOCHS_1, batch_size=BATCH_SIZE_1,   
-                        verbose=1, shuffle = True,
-                        class_weight=murmur_weight_dictionary,
-                        callbacks=[lr_schedule])
-
-            clinical_model.fit(x=data_padded, y=outcomes, epochs=EPOCHS_2, batch_size=BATCH_SIZE_2,   
-                        verbose=1, shuffle = True,
-                        class_weight=outcome_weight_dictionary,
-                        callbacks=[lr_schedule])
         elif PRE_TRAIN == True:
-                print("Train murmur model..")
-                model = base_model(data_padded.shape[1],data_padded.shape[2])
-                model.load_weights("./pretrained_model.h5")
-                
-                murmur_layer = tf.keras.layers.Dense(3, "softmax",  name="murmur_output")(model.layers[-2].output)
-                murmur_model = tf.keras.Model(inputs=model.layers[0].output, outputs=[murmur_layer])
-                
-                #for layer in murmur_model.layers[:-2]:
-                #    layer.trainable = False
+            model = base_model(data_padded.shape[1],data_padded.shape[2])
+            model.load_weights("./pretrained_model.h5")
+            
+            outcome_layer = tf.keras.layers.Dense(1, "sigmoid",  name="clinical_output")(model.layers[-2].output)
+            clinical_model = tf.keras.Model(inputs=model.layers[0].output, outputs=[outcome_layer])
+            clinical_model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
+                metrics = [tf.keras.metrics.BinaryAccuracy(),tf.keras.metrics.AUC(curve='ROC')])
 
-                murmur_model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=1e-5), 
-                    metrics = [tf.keras.metrics.CategoricalAccuracy(), tf.keras.metrics.AUC(curve='ROC')])
-                
-                murmur_model.fit(x=data_padded, y=murmurs, epochs=5, batch_size=BATCH_SIZE_1,   
-                        verbose=1, class_weight=murmur_weight_dictionary, shuffle = True)
-                
-                #for layer in murmur_model.layers[:-2]:
-                #    layer.trainable = True
-
-                #murmur_model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
-                #    metrics = [tf.keras.metrics.CategoricalAccuracy(), tf.keras.metrics.AUC(curve='ROC')])
-                
-                #murmur_model.fit(x=data_padded, y=murmurs, epochs=EPOCHS_1, batch_size=BATCH_SIZE_1,   
-                #        verbose=1, class_weight=murmur_weight_dictionary, shuffle = True, callbacks=[lr_schedule])
+            murmur_layer = tf.keras.layers.Dense(3, "softmax",  name="murmur_output")(model.layers[-2].output)
+            murmur_model = tf.keras.Model(inputs=model.layers[0].output, outputs=[murmur_layer])
+            murmur_model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
+                metrics = [tf.keras.metrics.CategoricalAccuracy(), tf.keras.metrics.AUC(curve='ROC')])
+        
 
 
-                print("Train clinical model..")
-                outcome_layer = tf.keras.layers.Dense(1, "sigmoid",  name="clinical_output")(model.layers[-2].output)
-                clinical_model = tf.keras.Model(inputs=model.layers[0].output, outputs=[outcome_layer])
-                
-                #for layer in clinical_model.layers[:-2]:
-                #    layer.trainable = False
+        murmur_model.fit(x=data_padded, y=murmurs, epochs=EPOCHS_1, batch_size=BATCH_SIZE_1,   
+                    verbose=1, shuffle = True,
+                    class_weight=murmur_weight_dictionary
+                    #,callbacks=[lr_schedule]
+                    )
 
-                clinical_model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=1e-5), 
-                    metrics = [tf.keras.metrics.BinaryAccuracy(),tf.keras.metrics.AUC(curve='ROC')])
-                
-                clinical_model.fit(x=data_padded, y=outcomes, epochs=5, batch_size=BATCH_SIZE_2,  
-                        verbose=1,class_weight=outcome_weight_dictionary, shuffle = True)
-                
-                #for layer in clinical_model.layers[:-2]:
-                #    layer.trainable = True
-                
-                #clinical_model.compile(loss="binary_crossentropy", optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
-                #    metrics = [tf.keras.metrics.BinaryAccuracy(),tf.keras.metrics.AUC(curve='ROC')])
-                
-                #clinical_model.fit(x=data_padded, y=outcomes, epochs=EPOCHS_2, batch_size=BATCH_SIZE_2,  
-                #        verbose=1, class_weight=outcome_weight_dictionary, shuffle = True, callbacks=[lr_schedule])
-
-
+        clinical_model.fit(x=data_padded, y=outcomes, epochs=EPOCHS_2, batch_size=BATCH_SIZE_2,   
+                    verbose=1, shuffle = True,
+                    class_weight=outcome_weight_dictionary
+                    #,callbacks=[lr_schedule]
+                    )
     
     murmur_model.save(os.path.join(model_folder, 'murmur_model.h5'))
 
@@ -241,14 +209,14 @@ def run_challenge_model(model, data, recordings, verbose):
     binarized_outcome_probabilities = (outcome_probabilities_temp > 0.5) * 1
 
     murmur_labels = np.zeros(len(murmur_classes), dtype=np.int_)
-    murmur_indx = np.bincount(binarized_murmur_probabilities).argmax()
-    murmur_labels[murmur_indx] = 1
-    #if 0 in binarized_murmur_probabilities:
-    #    murmur_labels[0] = 1
-    #elif 1 in binarized_murmur_probabilities:
-    #    murmur_labels[1] = 1
-    #elif 2 in binarized_murmur_probabilities:
-    #    murmur_labels[2] = 1
+    #murmur_indx = np.bincount(binarized_murmur_probabilities).argmax()
+    #murmur_labels[murmur_indx] = 1
+    if 0 in binarized_murmur_probabilities:
+        murmur_labels[0] = 1
+    elif 2 in binarized_murmur_probabilities:
+        murmur_labels[2] = 1
+    elif 1 in binarized_murmur_probabilities:
+        murmur_labels[1] = 1
 
     outcome_labels = np.zeros(len(outcome_classes), dtype=np.int_)
     # 0 = abnormal outcome
@@ -274,39 +242,6 @@ def run_challenge_model(model, data, recordings, verbose):
 #
 ################################################################################
 
-def get_features_my_func(data, recordings):
-    # Extract the age group and replace with the (approximate) number of months for the middle of the age group.
-    age_group = get_age(data)
-    age = 0
-
-    if compare_strings(age_group, 'Neonate'):
-        age = 0.5
-    elif compare_strings(age_group, 'Infant'):
-        age = 6
-    elif compare_strings(age_group, 'Child'):
-        age = 6 * 12
-    elif compare_strings(age_group, 'Adolescent'):
-        age = 15 * 12
-    elif compare_strings(age_group, 'Young Adult'):
-        age = 20 * 12
-    else:
-        age = float('nan')
-
-    # Extract sex. Use one-hot encoding.
-    sex = get_sex(data)
-
-    sex_feature = 0
-    if compare_strings(sex, 'Male'):
-        sex_feature = 1
-
-    # Extract height and weight.
-    height = get_height(data)
-    weight = get_weight(data)
-
-    # Extract pregnancy status.
-    is_pregnant = get_pregnancy_status(data)
-
-    return np.array([age, sex_feature, height, weight, is_pregnant])
 
 # Extract features from the data.
 def get_features(data, recordings):
