@@ -170,8 +170,3 @@ If you have trouble running your code, then please try the follow steps to run t
 ||20 epoch| Accuracy |0.51 ± 0.047|0.537|0.537
 ||Weighted categorical cross entropy| F measure|0.465 ± 0.061 |0.530|0.503
 
-
-# Citation
-
-
-# License
