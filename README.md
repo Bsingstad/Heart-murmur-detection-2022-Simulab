@@ -46,14 +46,15 @@ This repository contains some scripts we can edit and some scripts provided by t
 The repository also contains Jupyter Notebooks which makes easier to experiment with the data, models and other parameters. Some of the notebooks are designed to use in Google Colab in order to get access to GPUs and some notebooks are ok to run on your local computer.
 
 #### Colab:
-* `5-fold cross-validaton.ipynb` # contains code cross-validating the model on the training set
+* `5-fold cross-validaton.ipynb` # contains code for cross-validating the model on the training set
+* `Train and test model.ipynb` # contains code training model a model on the whole training set, save the weights, then upload the wights and test the model on the training set and finaly evaluate the predictions
 * `pretrain model on 2015 dataset.ipynb` # contains code for pretraing model on phonocardiogram data from PhysioNet Challenge 2016. returns a .h5 file
 #### Local:
 * `EDA-Phonocardiogram-dataset.ipynb`
 
 
 ### Papers:
-This folder contains some relevant papers in cardiology, deep learning  and eXplainable AI (XAI)
+This folder contains some relevant papers in cardiology, deep learning and eXplainable AI (XAI)
 
 ### Other files:
 This repository also contains the following files 
