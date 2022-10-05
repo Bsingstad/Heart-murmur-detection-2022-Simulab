@@ -47,7 +47,7 @@ The repository also contains Jupyter Notebooks which makes easier to experiment 
 
 #### Colab:
 * `execute_cv_training_and_test.ipynb` # contains code for training, testing, cross-validation and some XAI stuff TODO: split into 2-3 notebooks.
-* `using_2015_dataset.ipynb` # contains code for pretraing model on phonocardiogram data from PhysioNet Challenge 2016. returns a .h5 file
+* `pretrain model on 2015 dataset.ipynb` # contains code for pretraing model on phonocardiogram data from PhysioNet Challenge 2016. returns a .h5 file
 #### Local:
 * `EDA-Phonocardiogram-dataset.ipynb`
 * `EDA-Phonocardiogram-dataset-BJS.ipynb`
