@@ -50,11 +50,7 @@ The repository also contains Jupyter Notebooks which makes easier to experiment 
 * `Train and test model.ipynb` # contains code training model a model on the whole training set, save the weights, then upload the wights and test the model on the training set and finaly evaluate the predictions
 * `pretrain model on 2015 dataset.ipynb` # contains code for pretraing model on phonocardiogram data from PhysioNet Challenge 2016. returns a .h5 file
 #### Local:
-* `EDA-Phonocardiogram-dataset.ipynb`
-
-
-### Papers:
-This folder contains some relevant papers in cardiology, deep learning and eXplainable AI (XAI)
+* `EDA-Phonocardiogram-dataset.ipynb` # Exploratory data analysis of the dataset
 
 ### Other files:
 This repository also contains the following files 
