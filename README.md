@@ -4,24 +4,6 @@
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/phonocardiogram-classification-using-1/predict-clinical-outcome-on-circor-digiscope)](https://paperswithcode.com/sota/predict-clinical-outcome-on-circor-digiscope?p=phonocardiogram-classification-using-1)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/phonocardiogram-classification-using-1/classify-murmurs-on-circor-digiscope)](https://paperswithcode.com/sota/classify-murmurs-on-circor-digiscope?p=phonocardiogram-classification-using-1)
 
-![Mozilla Add-on](https://img.shields.io/amo/dw/murmur)
-
-<img src="https://img.shields.io/badge/TensorFlow-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white" />
-
-
-
-</p>
-<p align="center">
-    <a href="https://github.com/Bsingstad/Heart-murmur-detection-2022-Simulab/graphs/contributors" alt="Contributors">
-        <img src="https://img.shields.io/github/contributors/badges/shields" /></a>
-    <a href="#backers" alt="Backers on Open Collective">
-        <img src="https://img.shields.io/opencollective/backers/shields" /></a>
-    <a href="#sponsors" alt="Sponsors on Open Collective">
-        <img src="https://img.shields.io/opencollective/sponsors/shields" /></a>
-    <a href="https://github.com/Bsingstad/Heart-murmur-detection-2022-Simulab/pulse" alt="Activity">
-        <img src="https://img.shields.io/github/commit-activity/m/badges/shields" /></a>
-</p>
-
 ![alt text](docs/CNN_architecture.png)
 #### The 1-D CNN Inception time Architecture of the two classifiers
 
