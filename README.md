@@ -16,8 +16,7 @@
 * Bjørn-Jostein Singstad
 ---------------------------------
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/phonocardiogram-classification-using-1/predict-clinical-outcome-on-circor-digiscope)](https://paperswithcode.com/sota/predict-clinical-outcome-on-circor-digiscope?p=phonocardiogram-classification-using-1)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/phonocardiogram-classification-using-1/classify-murmurs-on-circor-digiscope)]
-(https://paperswithcode.com/sota/classify-murmurs-on-circor-digiscope?p=phonocardiogram-classification-using-1)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/phonocardiogram-classification-using-1/classify-murmurs-on-circor-digiscope)](https://paperswithcode.com/sota/classify-murmurs-on-circor-digiscope?p=phonocardiogram-classification-using-1)
 
 
 <img src="https://img.shields.io/badge/TensorFlow-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white" />
