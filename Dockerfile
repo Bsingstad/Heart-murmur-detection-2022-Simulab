@@ -1,4 +1,4 @@
-FROM python:3.8.9-buster
+FROM python:3.12.0a4-buster
 
 ## The MAINTAINER instruction sets the author field of the generated images.
 MAINTAINER author@example.com
