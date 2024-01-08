@@ -172,3 +172,16 @@ If you have trouble running your code, then please try the follow steps to run t
 ||20 epoch| Accuracy |0.51 ± 0.047|0.537|0.537
 ||Weighted categorical cross entropy| F measure|0.465 ± 0.061 |0.530|0.503
 
+# Citation
+```
+@inproceedings{singstad_2022_phono,
+  title={Phonocardiogram classification using 1-dimensional inception time convolutional neural networks},
+  author={Singstad, Bj{\o}rn-Jostein and Gitau, Antony M and Johnsen, Markus Kreutzer and Ravn, Johan and Bongo, Lars Ailo and Schirmer, Henrik},
+  booktitle={2022 Computing in Cardiology (CinC)},
+  volume={498},
+  pages={1--4},
+  year={2022},
+  organization={IEEE}
+}
+```
+
