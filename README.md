@@ -81,15 +81,16 @@ The main data source is [the CirCor DigiScope Dataset](https://physionet.org/con
 To pretrain the models we use the open dataset from [PhysioNet Challenge 2016](https://physionet.org/content/challenge-2016/1.0.0/), also available on [Kaggle](https://www.kaggle.com/datasets/bjoernjostein/physionet-challenge-2016).
 
 ## Dependencies
-* numpy==1.21.6
-* scipy==1.4.1
-* scikit-learn==0.23.2
-* joblib==0.17.0
-* tensorflow == 2.8.2
-* Cython==0.29.24
-* pandas==1.3.2
-* h5py==2.10.0
-* tqdm==4.54.0
+* `numpy==1.21.6`
+* `scipy==1.4.1`
+* `scikit-learn==0.23.2`
+* `joblib==0.17.0`
+* `tensorflow == 2.8.2`
+* `Cython==0.29.24`
+* `pandas==1.3.2`
+* `h5py==2.10.0`
+* `tqdm==4.54.0`
+
 ## Run the code locally: 
 
 You can try it by running the following commands on the Challenge training sets. These commands should take a few minutes or less to run from start to finish on a recent personal computer.
