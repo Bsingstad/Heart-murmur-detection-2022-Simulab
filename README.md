@@ -1,4 +1,5 @@
-# Phonocardiogram Classification Using 1-Dimensional Inception Time Convolutional Neural Networks : George B. Moody PhysioNet Challenge 2022 - Simulab ([Paper Preprint](https://cinc.org/2022/Program/accepted/108_Preprint.pdf)).
+# Phonocardiogram Classification Using 1-Dimensional Inception Time Convolutional Neural Networks : George B. Moody PhysioNet Challenge 2022
+## Team name: Simulab
 ---
 
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/phonocardiogram-classification-using-1/predict-clinical-outcome-on-circor-digiscope)](https://paperswithcode.com/sota/predict-clinical-outcome-on-circor-digiscope?p=phonocardiogram-classification-using-1)
@@ -7,7 +8,7 @@
 ![alt text](docs/CNN_architecture.png)
 #### The 1-D CNN Inception time Architecture of the two classifiers
 
-This repository is associated with the paper: *Phonocardiogram Classification Using 1-Dimensional Inception Time Convolutional Neural Networks* 
+This repository is associated with the paper: [*Phonocardiogram Classification Using 1-Dimensional Inception Time Convolutional Neural Networks*](https://ieeexplore.ieee.org/document/10081878)
 
 Full reference to the original paper :
 
