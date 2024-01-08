@@ -7,7 +7,11 @@
 ![alt text](docs/CNN_architecture.png)
 #### The 1-D CNN Inception time Architecture of the two classifiers
 
+This repository is associated with the paper: *Phonocardiogram Classification Using 1-Dimensional Inception Time Convolutional Neural Networks* 
 
+Full reference to the original paper :
+
+> B. -J. Singstad, A. M. Gitau, M. K. Johnsen, J. Ravn, L. A. Bongo and H. Schirmer, "Phonocardiogram Classification Using 1-Dimensional Inception Time Convolutional Neural Networks," 2022 Computing in Cardiology (CinC), Tampere, Finland, 2022, pp. 1-4, doi: 10.22489/CinC.2022.108.
 
 ## Team members:
 * Markus Johnsen
